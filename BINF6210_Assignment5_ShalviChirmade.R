@@ -71,11 +71,48 @@ dfData <- dfData[-1]
 #Check to see if it worked.
 dim(dfData)
 
-sample(dfData, 10)
-#for loop for column names
 
+#Create a variable with the different SC names.
+SC_Names <- c("SC1_", "SC2_", "SC4_", "SC5_", "SC6_", "SC7_", "SC9_", "SC10_")
 
+#Randomly sample three columns for each SC mouse.
+#sample(dfData, 10) #randomly samples 10 columns
 
+#Create a function to randomly select three samples from each mouse. As I have to do this eight times, I thought creating a function would be beneficial. This function can be used for any data frame, for any string to be matched and any number of samples. It will output a new data frame with the name of the string entered in the function.
+Randomly_Sample_Columns <- function(df, str, n){
+  
+  #df - the name of the data frame from which you would like to sample columns
+  
+  #str - the string that you want to search for in the column names. It must be entered with ""
+  
+  #n - number of columns with the string you would like to randomly sample
+  
+  #Extract the string to use as the name of the data frame to be created
+  name <- paste("df", str, sep = "")
+  
+  dfOutput <- df %>%
+    select(matches(str)) %>%
+    sample(n)
+  
+  #Add dfOutput to the global enviornment using the str as the name of the data frame
+  assign(name, data.frame(dfOutput), envir = .GlobalEnv)
+  
+}
+
+#Using a for loop, create new data frames for each mouse with the help of the new function.
+set.seed(6210)
+
+for (name in SC_Names) {
+  
+  Randomly_Sample_Columns(dfData, name, 3)
+  
+}
+
+#Combine these new data frames to use for the remainder of the analysis.
+dfData <- cbind(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_)
+
+#Remove the data frames no longer needed.
+rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_, SC_Names, name)
 
 
 
