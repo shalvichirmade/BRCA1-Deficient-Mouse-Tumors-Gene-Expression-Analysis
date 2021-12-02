@@ -109,10 +109,25 @@ for (name in SC_Names) {
 }
 
 #Combine these new data frames to use for the remainder of the analysis.
-dfData <- cbind(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_)
+dfData <- cbind(dfSC1_, dfSC2_, dfSC4_, dfSC6_, dfSC5_, dfSC7_, dfSC9_, dfSC10_)
+#This order is dependent on the type of sample; the first four are tumor and the last four are luminal.
 
 #Remove the data frames no longer needed.
 rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_, SC_Names, name)
+
+#Convert data frame into a DGE object for gene expression analysis. This cn be done using the DGEList function from edgeR. The input data frame is the one we just created, dfData and the groupings are the cell type, so either luminal or tumor.
+
+#This vector is to label each mouse sample type, luminal or tumor.
+group <- rep(c("tumor", "luminal"), each = 12)
+
+#Create the DGEList object.
+DGE_Data <- DGEList(dfData, group = group)
+C#check to see if this worked.
+DGE_Data
+#Can view each individual element of this list as well.
+View(DGE_Data[["counts"]])
+View(DGE_Data[["samples"]])
+
 
 
 
