@@ -33,7 +33,6 @@
 library(limma)
 library(Glimma)
 library(edgeR)
-library(Mus.musculus)
 
 #install.packages("R.utils")
 library(R.utils)
@@ -49,7 +48,7 @@ library(tidyverse)
 dfComplete_Data <- read.delim("GSE148569_scRNAseq_C1_count.txt")
 
 #Inspect the data.
-head(complete_data, n = c(10, 5))
+head(dfComplete_Data, n = c(10, 5))
 #There are 477 samples in this data set and 21004 genes analyzed.
 
 #This data set has an association to a published paper by Sun et al. This paper is not explicit with the details of this data file so I found it quite difficult to come up with a conclusion for what the data is showing me. I speculate that each of the different SC samples correspond to a different mouse; so SC1, SC2 and so on depict the names of the particular mice. Hence, each sample associated with a particular SC is a sample from that mouse. For example, if we take the first sample from the data frame we visualized above, SC1_01 refers to the 01 sample from mouse SC1. So, sample SC5_29 would mean sample 29 from mouse SC5. Four of these mice have been used for tumor samples and the other four mice have been used for the luminal samples.
@@ -122,21 +121,36 @@ group <- rep(c("tumor", "luminal"), each = 12)
 
 #Create the DGEList object.
 DGE_Data <- DGEList(dfData, group = group)
-C#check to see if this worked.
+#Check to see if this worked.
 DGE_Data
 #Can view each individual element of this list as well.
-View(DGE_Data[["counts"]])
-View(DGE_Data[["samples"]])
+View(DGE_Data$counts)
+View(DGE_Data$samples)
 
-
-
+#Remove variables that are no longer needed.
+rm(dfData, group)
 
 
 
 #### 4- MAIN SOFTWARE TOOLS ----
 
+#Check to see if there any any duplicated gene names present in our data set.
+anyDuplicated(rownames(DGE_Data$counts)) #0
 
+#As the data set I acquired already had gene names for each row, I did not need to extract these values using the Mus.musculus package.
 
+#There are also various gene names in the data set that consist of numbers and then the name Riken; for example, 4931408C20Rik. I do not have much experience working with the mouse genome but according to my research, these belong to names of genes that have not been officially annotated (Hayashizaki, 2003). Riken seems to be a large genomic institute in Japan that collaborates with various other institutes across the world to form comprehensive research on multiple different organisms. When I enter these names in UniProt, the associated gene name are the Rik ones we see here (https://www.uniprot.org/uniprot/E9PWP9).
+
+#In general for gene expression analysis, raw counts are not considered accurate values for comparison. Instead, counts per million (cpm) or log2-counts per million (lcpm) are utilized. This allows for the library size to be considered in the creation of these values. Library size is the total number of counts from each sample.
+#The total library size for our subset data set is:
+sum(DGE_Data$samples$lib.size) #39624581
+#The average library size for each sample is:
+mean(DGE_Data$samples$lib.size) #1651024
+
+#Converting the counts to cpm and lcpm.
+dfCPM <- cpm(DGE_Data)
+dfLCPM <- cpm(DGE_Data, log = T)
+#You can see that in the cpm matrix, all the 0 gene expression values remained 0 but in the lcpm matrix, this has been transformed to a more relational data set.
 
 
 
@@ -191,7 +205,7 @@ View(DGE_Data[["samples"]])
 #Sun H, Zeng J, Miao Z, Lei KC, Huang C, Hu L, Su SM, Chan UI, Miao K, Zhang X, Zhang A, Guo S, Chen S, Meng Y, Deng M, Hao W, Lei H, Lin Y, Yang Z, Tang D, Wong KH, Zhang XD, Xu X, Deng CX. Dissecting the heterogeneity and tumorigenesis of BRCA1 deficient mammary tumors via single cell RNA sequencing. Theranostics 2021; 11(20):9967-9987.
 #Paper of data
 
-
+#Hayashizaki Y. (2003). RIKEN mouse genome encyclopedia. Mechanisms of ageing and development, 124(1), 93–102.
 
 
 
