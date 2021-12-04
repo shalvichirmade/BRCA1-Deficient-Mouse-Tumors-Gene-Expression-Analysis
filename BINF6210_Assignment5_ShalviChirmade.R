@@ -30,16 +30,20 @@
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #install.packages("BiocManager")
 #BiocManager::install(c("limma", "Glimma", "edgeR", "Mus.musculus"))
-library(limma)
-library(Glimma)
 library(edgeR)
+library(Glimma)
+library(limma)
 
-#install.packages("R.utils")
-library(R.utils)
+
 #install.packages("gplots")
 library(gplots)
+#install.packages("RColorBrewer")
+library(RColorBrewer)
+#install.packages("R.utils")
+library(R.utils)
 #install.packages("tidyverse")
 library(tidyverse)
+
 
 
 ##Reading in the data from the GEO database. As I am working on a Mac, it automatically unzips the file hence the file used here is only .txt. This file is provided to you.
@@ -111,8 +115,11 @@ for (name in SC_Names) {
 dfData <- cbind(dfSC1_, dfSC2_, dfSC4_, dfSC6_, dfSC5_, dfSC7_, dfSC9_, dfSC10_)
 #This order is dependent on the type of sample; the first four are tumor and the last four are luminal.
 
+#Extract column names for later analysis. 
+samplenames <- colnames(DGE_Data$counts)
+
 #Remove the data frames no longer needed.
-rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_, SC_Names, name)
+rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_, SC_Names,name)
 
 #Convert data frame into a DGE object for gene expression analysis. This cn be done using the DGEList function from edgeR. The input data frame is the one we just created, dfData and the groupings are the cell type, so either luminal or tumor.
 
@@ -128,7 +135,7 @@ View(DGE_Data$counts)
 View(DGE_Data$samples)
 
 #Remove variables that are no longer needed.
-rm(dfData, group)
+rm(dfData)
 
 
 
@@ -150,7 +157,59 @@ mean(DGE_Data$samples$lib.size) #1651024
 #Converting the counts to cpm and lcpm.
 dfCPM <- cpm(DGE_Data)
 dfLCPM <- cpm(DGE_Data, log = T)
-#You can see that in the cpm matrix, all the 0 gene expression values remained 0 but in the lcpm matrix, this has been transformed to a more relational data set.
+#You can see that in the cpm matrix, all the 0 gene expression values remained 0 but in the lcpm matrix, this has been transformed to a more relational data set; it is useful when creating exploratory plots. It reduces the inter-sample changes and prevents a large separation between the lowest and highest count values. 
+
+#Calculating the L and M parameters used in the lcpm calculations; it will be used for generating read density figures later on.
+L <- mean(DGE_Data$samples$lib.size) * 1e-6
+M <- median(DGE_Data$samples$lib.size) * 1e-6
+#The library size for this data set is very very low in comparison to the vignette data set. This has about 1.6 million on average while the vignette data set was at 45.5 million. We will see how this is affected when we compare the genes lost during filtration in the next step.
+
+
+#Let's determine if there are any genes that have zero expression in all samples.
+table(rowSums(DGE_Data$counts == 0) == 24)
+#There are 7429 genes with zero expression. These will be deleted from our data set as they can hinder our downstream analysis.
+
+#This function, filterByExpr from the edgeR package, allows us to filter out the lowly expressed genes while still maintaining a large amount of data for analysis. It creates a logical vector displaying the rows to be kept and removed.
+KeepExprs <- filterByExpr(DGE_Data, group = group)
+DGE_Data <- DGE_Data[KeepExprs,, keep.lib.sizes = F]
+
+#Let's compare the amount of genes we lost to the number that had zero counts in all samples.
+dim(DGE_Data) #3382 24
+(21004-3382)/21004 * 100 #Removed 83.9% of the genes..
+#It has removed a SUBSTANTIAL amount of genes! After re-analyzing the original data set, I came to realize that most of the rows had values of 0 throughout each gene. This could be because I have only taken a small subset of the samples actually analyzed by the authors of the paper or it could be the due to the quality of reads attained by the authors while carrying out the experiment. I am going to continue my analysis using the 3400 genes I do have in this data as it should still be able to yield functional plots for my interpretation. If I am obstructed with errors, I will have to re-evaluate this data set or the filtration step itself. 
+
+#I will re-try this step and reduce the minimum count to 5 as the default is set to 10. I hope we notice a fewer amount of genes being discarded.
+# KeepExprs <- filterByExpr(DGE_Data, group = group, min.count = 5)
+# DGE_Data <- DGE_Data[KeepExprs,, keep.lib.sizes = F]
+# dim(DGE_Data) #3914 24
+# (21004-3914)/21004 * 100 #81.4%
+#As the number of samples barely reduced. I will keep the default minimum count as it is recommended by the vignette for a more accurate downstream analysis. The vignette also states that the genes retained have counts in mostly all samples for the same grouping. In our case, these groupings would be luminal and tumor. So if a gene has multiple zero counts for all the luminal or tumor samples, this gene would be disregarded. If the gene is of interest to the study, most of the samples from the same groupings should have a count associated. If not, then the count for that gene could be a rogue value. After reading this, I re-checked to make sure I made the correct groupings based on the paper and the GEO database; as the authors did not specifically specify what each sample corresponds to, my speculations could be inaccurate. Furthermore, the vignette data set lost about 60% of their data during this filtration step so my assumptions could be the right choice. They also mention that a lower library size can be a factor of losing more data as there is less information to evaluate. Let's move on and see what our current data set can provide us.
+
+#I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code comes from the vignette for RNA-Seq analysis by Bioconductor.
+
+lcpm.cutoff <- log2(10/M + 2/L)
+nsamples <- ncol(DGE_Data)
+col <- colorRampPalette(brewer.pal(12, "Paired")) (nsamples) #Add more colors to the palette.
+par(mfrow=c(1,2))
+plot(density(dfLCPM[,1]), col=col[1], lwd=2, ylim=c(0,2), las=2, main="", xlab="")
+title(main="A. Raw data", xlab="Log-cpm")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(dfLCPM[,i])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75)
+dfLCPM <- cpm(DGE_Data, log=TRUE)
+plot(density(dfLCPM[,1]), col=col[1], lwd=2, ylim=c(0,2), las=2, main="", xlab="")
+title(main="B. Filtered data", xlab="Log-cpm")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(dfLCPM[,i])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't show in zoom
+
+#We can see a drastic difference between the raw data and the filtered. A large amount of data were at zero to low values. We can also see a varying expression for each sample; this can account to the quality of the data from this study.
 
 
 
