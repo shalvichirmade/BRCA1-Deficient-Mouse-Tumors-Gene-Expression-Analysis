@@ -29,7 +29,7 @@
 
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #install.packages("BiocManager")
-#BiocManager::install(c("limma", "Glimma", "edgeR", "Mus.musculus"))
+#BiocManager::install(c("limma", "Glimma", "edgeR"))
 library(edgeR)
 library(Glimma)
 library(limma)
@@ -77,9 +77,6 @@ dim(dfData)
 
 #Create a variable with the different SC names.
 SC_Names <- c("SC1_", "SC2_", "SC4_", "SC5_", "SC6_", "SC7_", "SC9_", "SC10_")
-
-#Randomly sample three columns for each SC mouse.
-#sample(dfData, 10) #randomly samples 10 columns
 
 #Create a function to randomly select three samples from each mouse. As I have to do this eight times, I thought creating a function would be beneficial. This function can be used for any data frame, for any string to be matched and any number of samples. It will output a new data frame with the name of the string entered in the function.
 Randomly_Sample_Columns <- function(df, str, n){
@@ -138,9 +135,6 @@ View(DGE_Data$samples)
 rm(dfData)
 
 
-
-#### 4- MAIN SOFTWARE TOOLS ----
-
 #Check to see if there any any duplicated gene names present in our data set.
 anyDuplicated(rownames(DGE_Data$counts)) #0
 
@@ -153,6 +147,7 @@ anyDuplicated(rownames(DGE_Data$counts)) #0
 sum(DGE_Data$samples$lib.size) #39624581
 #The average library size for each sample is:
 mean(DGE_Data$samples$lib.size) #1651024
+#Will display library size as a bar plot a little later on.
 
 #Converting the counts to cpm and lcpm.
 dfCPM <- cpm(DGE_Data)
@@ -163,6 +158,27 @@ dfLCPM <- cpm(DGE_Data, log = T)
 L <- mean(DGE_Data$samples$lib.size) * 1e-6
 M <- median(DGE_Data$samples$lib.size) * 1e-6
 #The library size for this data set is very very low in comparison to the vignette data set. This has about 1.6 million on average while the vignette data set was at 45.5 million. We will see how this is affected when we compare the genes lost during filtration in the next step.
+
+#Create a bar plot showing the difference in library size.
+#The average library size for each mouse.
+SC1_lib <- mean(DGE_Data$samples$lib.size[1:3])
+SC2_lib <- mean(DGE_Data$samples$lib.size[4:6])
+SC4_lib <- mean(DGE_Data$samples$lib.size[7:9])
+SC6_lib <- mean(DGE_Data$samples$lib.size[10:12])
+SC5_lib <- mean(DGE_Data$samples$lib.size[13:15])
+SC7_lib <- mean(DGE_Data$samples$lib.size[16:18])
+SC9_lib <- mean(DGE_Data$samples$lib.size[19:21])
+SC10_lib <- mean(DGE_Data$samples$lib.size[22:24])
+
+#Create a data frame containing the information needed to create a visualization.
+dfLib <- data.frame(name = SC_Names, size = rbind(SC1_lib, SC2_lib, SC4_lib, SC6_lib, SC5_lib, SC7_lib, SC9_lib, SC10_lib), cell_type = c("tumor","tumor", "tumor", "tumor", "luminal", "luminal", "luminal", "luminal"))
+
+ggplot(dfLib, aes(x = factor(name, levels = SC_Names), y = size, fill = cell_type)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(name = "Cell-type", values = c("#47E0E5", "#62E547")) +
+  theme_bw() +
+  labs(x = "Mouse Name", y = "Library Size", title = "Library Size in Samples") 
+#The distribution of these library sizes on average per cell-type is not noticeably different. There is one sample from each that has a lower library size; this can be due to the fact that I randomly selected three samples from each mouse. If we had used the full data set, we may not see this distribution.
 
 
 #Let's determine if there are any genes that have zero expression in all samples.
@@ -199,12 +215,13 @@ for (i in 2:nsamples){
   lines(den$x, den$y, col=col[i], lwd=2)
 }
 legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75)
-dfLCPM <- cpm(DGE_Data, log=TRUE)
-plot(density(dfLCPM[,1]), col=col[1], lwd=2, ylim=c(0,2), las=2, main="", xlab="")
+
+dfLCPM_filtered <- cpm(DGE_Data, log=TRUE)
+plot(density(dfLCPM_filtered[,1]), col=col[1], lwd=2, ylim=c(0,2), las=2, main="", xlab="")
 title(main="B. Filtered data", xlab="Log-cpm")
 abline(v=lcpm.cutoff, lty=3)
 for (i in 2:nsamples){
-  den <- density(dfLCPM[,i])
+  den <- density(dfLCPM_filtered[,i])
   lines(den$x, den$y, col=col[i], lwd=2)
 }
 legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't show in zoom
@@ -213,6 +230,11 @@ legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't
 
 
 
+#The next step in our quality control is normalization.
+
+
+
+#### 4- MAIN SOFTWARE TOOLS ----
 
 
 
@@ -272,6 +294,3 @@ legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't
 
 
 ### QUESTIONS TO ASK
-
-#1- There are 477 samples and 21004 genes. Should I choose 1-2 samples from each SC?
-#Categories are tumor and luminal (4 SCs from each)
