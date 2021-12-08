@@ -265,8 +265,6 @@ boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab =
 
 
 
-
-
 #### 4- MAIN SOFTWARE TOOLS ----
 
 
@@ -274,7 +272,16 @@ boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab =
 
 #### 5- MAIN ANALYSIS ----
 
+#The main analysis of this script is showcasing the genes that are differentially expressed among the two groupings of our data, tumor and luminal. For this, we are in the assumption that our data is normally distributed. First we create a design matrix for the cell-type groupings. I used the vignette (https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html) to help me determine if I need to use an intercept term. I will not include an intercept term as the grouping are not covariates and the models are considered equivalent.
+mtDesign <- model.matrix(~0+group)
+colnames(mtDesign) <- gsub("group", "", colnames(mtDesign))
+mtDesign
 
+#We have to set up model contrasts for the our groups as they do not have an associated intercept. The makeContrasts function from limma is used to make pairwise comparison between the two cell populations.
+mtContrasts <- makeContrasts(TvsL = tumor - luminal, levels = colnames(mtDesign))
+mtContrasts
+
+#Honestly, I found going along the vignette quite difficult for my data set. As I am not completely sure if my groupings are correct, I am always worried that my results are incorrect. However, as this assignment is about doing an analysis along with learning the ups and downs about data sets and packages, I believe that I am learning a lot along the way.
 
 
 
@@ -312,6 +319,9 @@ boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab =
 
 #https://master.bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
 #RNASeq Bioconductor vignette
+
+#https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html
+#Design matrices vignette
 
 #https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE148569
 #Data
