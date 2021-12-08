@@ -250,6 +250,7 @@ boxplot(dfLCPM, las = 2, col = col, main = "A. Unnormalizaed Data Example", ylab
 DGE_Data_2 <- calcNormFactors(DGE_Data_2, method = "TMMwsp") #Normalizing data in this duplicted DGE object
 dfLCPM <- cpm(DGE_Data_2, log = T)
 boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab = "Log-cpm")
+par(mfrow = c(1,1))
 
 #We can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested, my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
 
@@ -281,13 +282,20 @@ mtDesign
 mtContrasts <- makeContrasts(TvsL = tumor - luminal, levels = colnames(mtDesign))
 mtContrasts
 
-#Honestly, I found going along the vignette quite difficult for my data set. As I am not completely sure if my groupings are correct, I am always worried that my results are incorrect. However, as this assignment is about doing an analysis along with learning the ups and downs about data sets and packages, I believe that I am learning a lot along the way.
+#Honestly, I found going along the vignette quite difficult for my data set. As I am not completely sure if my groupings are accurate, I am always worried that my results are incorrect. However, as this assignment is about conducting an analysis along with learning the ups and downs about data sets and packages, I believe that I am learning a lot along the way.
 
 
+#Removing heteroscedasticity from count data
 
+#When using raw counts for RNA-seq data, the variance is not considered independent from the mean. For this script, we use the lcpm values where we assume our data is normally distributed. The function, voom, calculates precision weights on the mean-variance dependency by using library size and the normalization factors.
+par(mfrow = c(1,2))
+V_EList <- voom(DGE_Data, mtDesign, plot = T)
+VFit <- lmFit(V_EList, mtDesign)
+VFit <- contrasts.fit(VFit, contrasts = mtContrasts)
+EFit <- eBayes(VFit)
+plotSA(EFit, main = "Final Model: Mean-variance trend")
 
-
-
+#In these plots, the means are plotted on the x axis and the variances are plotted on the y axis. The comparison image shows the distribution before and after voom is applied to the data set. After briefly reading the paper introducing voom (Law et al., 2014), I was unable to understand why the data set before voom has a slight increase trend before decreasing. My understanding of linear models is not adequate enough to have an explanation; if this can be explained, I would really like to understand why. The black dots in each of these plots correlates to a gene in our data set. We can see that this data set is smaller in comparison to the data set used in the vignette. Voom creates an EList object containing various information we have already seen in the DGEList object as well as additional information such as expression values and precision weights.
 
 
 
@@ -332,6 +340,8 @@ mtContrasts
 #Hayashizaki Y. (2003). RIKEN mouse genome encyclopedia. Mechanisms of ageing and development, 124(1), 93–102.
 
 #Evans, C., Hardin, J., & Stoebel, D. M. (2018). Selecting between-sample RNA-Seq normalization methods from the perspective of their assumptions. Briefings in bioinformatics, 19(5), 776–792.
+
+#Law, C. W., Chen, Y., Shi, W., & Smyth, G. K. (2014). voom: Precision weights unlock linear model analysis tools for RNA-seq read counts. Genome biology, 15(2), R29.
 
 
 
