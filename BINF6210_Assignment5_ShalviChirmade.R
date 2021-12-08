@@ -112,11 +112,8 @@ for (name in SC_Names) {
 dfData <- cbind(dfSC1_, dfSC2_, dfSC4_, dfSC6_, dfSC5_, dfSC7_, dfSC9_, dfSC10_)
 #This order is dependent on the type of sample; the first four are tumor and the last four are luminal.
 
-#Extract column names for later analysis. 
-samplenames <- colnames(DGE_Data$counts)
-
 #Remove the data frames no longer needed.
-rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_, SC_Names,name)
+rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_,name)
 
 #Convert data frame into a DGE object for gene expression analysis. This cn be done using the DGEList function from edgeR. The input data frame is the one we just created, dfData and the groupings are the cell type, so either luminal or tumor.
 
@@ -130,6 +127,9 @@ DGE_Data
 #Can view each individual element of this list as well.
 View(DGE_Data$counts)
 View(DGE_Data$samples)
+
+#Extract column names for later analysis. 
+samplenames <- colnames(DGE_Data$counts)
 
 #Remove variables that are no longer needed.
 rm(dfData)
@@ -232,6 +232,39 @@ legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't
 
 #The next step in our quality control is normalization.
 
+#Normalization is carried out to allow for a reasonably similar expression pattern among all the samples being analyzed. As we saw in the bar plot, there were a few samples with lower library size and one with almost half of the largest library. This can occur from external factors during the experiment such as sequencing depth and even GC count (Evans et al., 2017). The main reason for normalization is to showcase the true differences in samples instead of using the raw values given by the instrument (Evans et al., 2017). Another reason for the use normalization is that the variance in gene counts can be from the outcome of differential coverage instead of differential gene expression (Evans et al., 2017). THe vignette uses the method of Trimmed Mean of the M-values (TMM) where a sample is chosen as a reference and fold-changes are calculated relative to this sample (Evans et al., 2017). Apparently this method of usage is known only from being used in the edgeR package, which is the one we are using today. This method did not give a good representation of normalized data so I chose TMMwsp instead which is 'TMM with singleton pairing' method. This performs better with data consisting of multiple 0 expression values; as we have seen, this data set is riddled with 0 expression, hence it works better for my further analysis.
+
+DGE_Data <- calcNormFactors(DGE_Data, method = "TMMwsp")
+#We see a new element in our DGE_Data object called norm.factors.
+DGE_Data$samples$norm.factors
+
+#To better visualize the impact of normalization, we will create a boxplot showcasing log-CPM values of expression distribution for both unnormalized and normalized data. We will see that in the unnormalized data, there will be a variance in expression levels but this will be standardized in the normalized image. The DGE object is duplicated to manipulate the already normalized data into showcasing what unnormalized data looks like.
+DGE_Data_2 <- DGE_Data
+DGE_Data_2$samples$norm.factors <- 1 #Setting all the norm factors to 1
+DGE_Data_2$counts[,1] <- ceiling(DGE_Data_2$counts[,1] * 0.05)
+DGE_Data_2$counts[,2] <- DGE_Data_2$counts[,2] * 5
+
+par(mfrow = c(1,2))
+dfLCPM <- cpm(DGE_Data_2, log = T)
+boxplot(dfLCPM, las = 2, col = col, main = "A. Unnormalizaed Data Example", ylab = "Log-cpm") #Using the same colors as the plot above
+DGE_Data_2 <- calcNormFactors(DGE_Data_2, method = "TMMwsp") #Normalizing data in this duplicted DGE object
+dfLCPM <- cpm(DGE_Data_2, log = T)
+boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab = "Log-cpm")
+
+#We can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested, my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
+
+
+# #Unsupervised clustering of samples - DELETE
+# 
+# #A multi-dimensional scaling (MDS) plot can be created to visualize the similarities and differences in the samples being used. This can be done using the plotMDS function in limma.
+# dfLCPM <- cpm(DGE_Data, log = T)
+# Color_By_Group <- group
+# levels(Color_By_Group) <- brewer.pal(2, "Spectral") #Colorblind friendly
+# Color_By_Group <- as.character(Color_By_Group)
+# plotMDS(dfLCPM, labels = group, col = levels(Color_By_Group), main = "Sample Groups")
+
+
+
 
 
 #### 4- MAIN SOFTWARE TOOLS ----
@@ -287,6 +320,9 @@ legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't
 #Paper of data
 
 #Hayashizaki Y. (2003). RIKEN mouse genome encyclopedia. Mechanisms of ageing and development, 124(1), 93–102.
+
+#Evans, C., Hardin, J., & Stoebel, D. M. (2018). Selecting between-sample RNA-Seq normalization methods from the perspective of their assumptions. Briefings in bioinformatics, 19(5), 776–792.
+
 
 
 
