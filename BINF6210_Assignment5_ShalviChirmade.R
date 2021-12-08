@@ -258,7 +258,7 @@ par(mfrow = c(1,1))
 # #Unsupervised clustering of samples - DELETE
 # 
 # #A multi-dimensional scaling (MDS) plot can be created to visualize the similarities and differences in the samples being used. This can be done using the plotMDS function in limma.
-# dfLCPM <- cpm(DGE_Data, log = T)
+#dfLCPM <- cpm(DGE_Data, log = T)
 # Color_By_Group <- group
 # levels(Color_By_Group) <- brewer.pal(2, "Spectral") #Colorblind friendly
 # Color_By_Group <- as.character(Color_By_Group)
@@ -298,6 +298,47 @@ plotSA(EFit, main = "Final Model: Mean-variance trend")
 #In these plots, the means are plotted on the x axis and the variances are plotted on the y axis. The comparison image shows the distribution before and after voom is applied to the data set. After briefly reading the paper introducing voom (Law et al., 2014), I was unable to understand why the data set before voom has a slight increase trend before decreasing. My understanding of linear models is not adequate enough to have an explanation; if this can be explained, I would really like to understand why. The black dots in each of these plots correlates to a gene in our data set. We can see that this data set is smaller in comparison to the data set used in the vignette. Voom creates an EList object containing various information we have already seen in the DGEList object as well as additional information such as expression values and precision weights.
 
 
+#Examining the number of differentially expressed genes
+
+#A simple table can be created using the decideTests function from limma to summarize the number of significantly up- and down-regulated genes. As per usual, significance is cut off at a p-value of 0.05 by default.
+dt <- decideTests(EFit)
+summary(dt)
+#We can see that most of the genes are not significantly different from the two different groupings. This tells us that there are 28 genes that are up-regulated in the tumor samples and 26 down-regulated genes in the tumor samples relative to the luminal samples. This can mean that there only a few gene expressions that are affected in our data set when comparing tumor and luminal samples of mice.
+
+#This step allows us to extract the differentially expressed gene names. As 0 represents genes that are not differentially expressed, we are looking for the rest.
+DE_Common <- which(dt[,1] != 0)
+length(DE_Common) #54 genes
+DE_Genes <- rownames(EFit$coefficients)[DE_Common] #These are the significantly expressed genes. Storing this vector to use for finding GO terms later on.
+DE_Genes
+
+# TFit <- treat(VFit, lfc = 1)
+# dt2 <- decideTests(TFit)
+# summary(dt2) #7 up and 1 down regulated genes
+
+
+#Displaying the differential expression results graphically
+
+#Limma has a function called plotMD which allows for the genes to be displayed visually by mean-difference plots. This uses log-FC values from our lineal model analysis against the mean lcpm value.
+par(mfrow = c(1,1))
+plotMD(EFit, column = 1, status = dt[,1], main = colnames(EFit)[1], xlim = c(0, 13))
+
+#A MA plot is an interpretation of the Bland-Altman plot which calculates the agreement between quantitative measures (Giavarina, 2015). The mean and sd of the differences between the measurements are used to calculate the statistical limits (Giavarina, 2015). It is a scatter plot where the x axis displays average of the means and the y axis measures the difference of the paired measurements we calculated earlier when creating our contrast matrix (Giavarina, 2015). As we can see in the colored dots, the red ones display the up-regulated genes and the blue dots show the down-regulated genes.
+
+#A heatmap can also be used to display the differentially expressed genes. We will be using all 54 DE genes. We can utilize the heatmap.s function from the gplots package to create this.
+dfLCPM <- cpm(DGE_Data, log = T)
+Color_HeatMap <- colorpanel(1000, "blue", "white", "red")
+
+heatmap.2(dfLCPM[DE_Common,], 
+          scale = "row",
+          labRow = DE_Genes,
+          labCol = group,
+          col = Color_HeatMap,
+          trace = "none",
+          density.info = "none",
+          lhei = c(2,10),
+          dendrogram = "column")
+
+#As we can see, this data set is quite a mess. There are two tumor samples that have clustered with the luminal samples. As I talked about in the Data Acquisition section, both these cell-types are from a BRCA1-deficient mouse; the paper was studying the intratumor variations so a clear distinction of gene expression is not going to be seen. However, we can mildly see a distinction between the up-regulated and down-regulated genes in the tumor and luminal samples. Most of the genes at the top of the plot show an up-regulation in tumor cells and the most of the genes at the bottom of the plot show an up-regulation in the luminal cells. The next step for my analysis is to correlate these differentially expressed genes with their associated GO terms; hopefully we can figure out why the particular genes are either up- or down-regulated in our two groups.
 
 
 
@@ -342,6 +383,8 @@ plotSA(EFit, main = "Final Model: Mean-variance trend")
 #Evans, C., Hardin, J., & Stoebel, D. M. (2018). Selecting between-sample RNA-Seq normalization methods from the perspective of their assumptions. Briefings in bioinformatics, 19(5), 776–792.
 
 #Law, C. W., Chen, Y., Shi, W., & Smyth, G. K. (2014). voom: Precision weights unlock linear model analysis tools for RNA-seq read counts. Genome biology, 15(2), R29.
+
+#Giavarina D. (2015). Understanding Bland Altman analysis. Biochemia medica, 25(2), 141–151.
 
 
 
