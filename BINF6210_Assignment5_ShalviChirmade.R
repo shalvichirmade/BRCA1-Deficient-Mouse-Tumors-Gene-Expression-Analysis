@@ -29,10 +29,12 @@
 
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #install.packages("BiocManager")
-#BiocManager::install(c("limma", "Glimma", "edgeR"))
+#BiocManager::install(c("limma", "Glimma", "edgeR", "goseq", "TxDb.Mmusculus.UCSC.mm39.refGene"))
 library(edgeR)
 library(Glimma)
+library(goseq)
 library(limma)
+library(TxDb.Mmusculus.UCSC.mm39.refGene)
 
 
 #install.packages("gplots")
@@ -67,7 +69,7 @@ dim(dfData)
 #The first step is to make the columns displaying the gene names into the row names.
 rownames(dfData) <- dfData$X
 #Check to see if it worked
-rownames(dfData)
+head(rownames(dfData),10)
 
 #Delete the gene name column.
 dfData <- dfData[-1]
@@ -341,6 +343,27 @@ heatmap.2(dfLCPM[DE_Common,],
 #As we can see, this data set is quite a mess. There are two tumor samples that have clustered with the luminal samples. As I talked about in the Data Acquisition section, both these cell-types are from a BRCA1-deficient mouse; the paper was studying the intratumor variations so a clear distinction of gene expression is not going to be seen. However, we can mildly see a distinction between the up-regulated and down-regulated genes in the tumor and luminal samples. Most of the genes at the top of the plot show an up-regulation in tumor cells and the most of the genes at the bottom of the plot show an up-regulation in the luminal cells. The next step for my analysis is to correlate these differentially expressed genes with their associated GO terms; hopefully we can figure out why the particular genes are either up- or down-regulated in our two groups.
 
 
+##Gene Ontology Analysis
+
+#To perform this analysis, I have to create a named vector containing all the genes analyzed in this study and if there are differentially expressed. I will start by creating a vector containing the names of the 3382 genes we used.
+Assayed_Genes <- rownames(dfLCPM)
+
+#DE_Genes is a vector we already created to showcase the differentially expressed genes. It consists of 54 genes.
+
+#Now we will incorporate these two vectors to output a numerical vector stating if the original list of genes were differentially expressed (1) or not differentially expressed (0).
+Gene_Vector <- as.integer(Assayed_Genes %in% DE_Genes)
+names(Gene_Vector) <- Assayed_Genes
+
+#Let's look to see if we did what we intended.
+head(Gene_Vector, 20)
+
+#After looking through the supportedOrganisms() list provided by goseq, I realized that the newest genome for Mus musculus (mm39) is not available through the offline database of goseq, hence I needed to install the Bioconductor package for this specific genome and all its gene annotations (TxDb.Mmusculus.UCSC.mm39.refGene). I also had to go through the vignette for Genomic Feautures (https://bioconductor.org/packages/release/bioc/vignettes/GenomicFeatures/inst/doc/GenomicFeatures.pdf) as it helped with extracting the data I required from the TxDb object.
+
+
+
+
+
+
 
 #### 6- RESULTS AND DISCUSSION ----
 
@@ -371,6 +394,15 @@ heatmap.2(dfLCPM[DE_Common,],
 
 #https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html
 #Design matrices vignette
+
+#https://bioconductor.org/packages/devel/bioc/vignettes/goseq/inst/doc/goseq.pdf
+#goseq vigenette
+
+#https://bioconductor.org/packages/release/data/annotation/manuals/TxDb.Mmusculus.UCSC.mm39.refGene/man/TxDb.Mmusculus.UCSC.mm39.refGene.pdf
+#mm39 genome vignette
+
+#https://bioconductor.org/packages/release/bioc/vignettes/GenomicFeatures/inst/doc/GenomicFeatures.pdf
+#To use TxDB object
 
 #https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE148569
 #Data
