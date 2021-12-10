@@ -29,11 +29,12 @@
 
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #install.packages("BiocManager")
-#BiocManager::install(c("limma", "Glimma", "edgeR", "goseq", "TxDb.Mmusculus.UCSC.mm39.refGene"))
+#BiocManager::install(c("limma", "Glimma", "edgeR", "goseq", "Mus.musculus","TxDb.Mmusculus.UCSC.mm39.refGene"))
 library(edgeR)
 library(Glimma)
 library(goseq)
 library(limma)
+library(Mus.musculus)
 library(TxDb.Mmusculus.UCSC.mm39.refGene)
 
 
@@ -350,14 +351,51 @@ Assayed_Genes <- rownames(dfLCPM)
 
 #DE_Genes is a vector we already created to showcase the differentially expressed genes. It consists of 54 genes.
 
+#After looking through the supportedOrganisms() list provided by goseq, I realized that the newest genome for Mus musculus (mm39) is not available through the offline database of goseq, hence I needed to install the Bioconductor package for this specific genome and all its gene annotations (TxDb.Mmusculus.UCSC.mm39.refGene). I also had to go through the vignette for Genomic Feautures (https://bioconductor.org/packages/release/bioc/vignettes/GenomicFeatures/inst/doc/GenomicFeatures.pdf) as it helped with extracting the data I required from the TxDb object.
+
+#As the information I have is the gene names (SYMBOL), I have to use the Mus.musculus package to incorporate the gene names into the TxDb object. I am switching the mm10 TxDb from the Mus.musculus package to the newer mm39 TxDb.
+TxDb(Mus.musculus) <- TxDb.Mmusculus.UCSC.mm39.refGene
+Mus.musculus
+#Can see that the TxDb object has been replaced.
+
+dbGeneID <- select(Mus.musculus, keys = Assayed_Genes, columns = "GENEID", keytype = "SYMBOL")
+dbDE_GENEID <- select(Mus.musculus, keys = DE_Genes, columns = "GENEID", keytype = "SYMBOL")
+
+#Create vectors with the GENEID for both the full list of genes and DE genes.
+Assayed_Genes_ID <- as.vector(dbGeneID$GENEID)
+DE_Genes_ID <- as.vector(dbDE_GENEID$GENEID)
+
 #Now we will incorporate these two vectors to output a numerical vector stating if the original list of genes were differentially expressed (1) or not differentially expressed (0).
-Gene_Vector <- as.integer(Assayed_Genes %in% DE_Genes)
-names(Gene_Vector) <- Assayed_Genes
+Gene_Vector <- as.integer(Assayed_Genes_ID %in% DE_Genes_ID)
+names(Gene_Vector) <- Assayed_Genes_ID
 
 #Let's look to see if we did what we intended.
 head(Gene_Vector, 20)
 
-#After looking through the supportedOrganisms() list provided by goseq, I realized that the newest genome for Mus musculus (mm39) is not available through the offline database of goseq, hence I needed to install the Bioconductor package for this specific genome and all its gene annotations (TxDb.Mmusculus.UCSC.mm39.refGene). I also had to go through the vignette for Genomic Feautures (https://bioconductor.org/packages/release/bioc/vignettes/GenomicFeatures/inst/doc/GenomicFeatures.pdf) as it helped with extracting the data I required from the TxDb object.
+
+#To carry out the rest of our GO analysis, we have to manually extract the gene lengths for each of these genes before fitting the probability weighting function (PWF).
+dfTxDb_Gene_Length <- transcriptLengths(TxDb.Mmusculus.UCSC.mm39.refGene)
+head(dfTxDb_Gene_Length, 10)
+
+#Extract the gene lengths for each of the genes we require.
+dfTxDb_Gene_Length_Subset <- dfTxDb_Gene_Length %>%
+  filter(gene_id %in% Assayed_Genes_ID)
+#We can see that many genes have multiple entries. We will have to average the gene lengths for the repeated entries.
+
+dfTxDb_Gene_Length_Subset %<>%
+  dplyr::select(gene_id, tx_len) %>%
+  group_by(gene_id) %>%
+  summarise(mean_length = ceiling(mean(tx_len)))
+
+#We can see that not every gene in our Assayed_Genes have an entry in this data frame. As those genes cannot be analyzed for the rest of out script, I will delete those from Gene_Vector.
+Assayed_Genes_ID <- as.vector(dfTxDb_Gene_Length_Subset$gene_id)
+Gene_Vector <- as.integer(Assayed_Genes_ID %in% DE_Genes_ID)
+names(Gene_Vector) <- Assayed_Genes_ID
+
+
+
+pwf <- nullp(Gene_Vector, bias.data = dfTxDb_Gene_Length_Subset$mean_length, plot.fit = F)
+
 
 
 
