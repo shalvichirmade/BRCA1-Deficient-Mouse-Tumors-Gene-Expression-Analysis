@@ -358,8 +358,8 @@ TxDb(Mus.musculus) <- TxDb.Mmusculus.UCSC.mm39.refGene
 Mus.musculus
 #Can see that the TxDb object has been replaced.
 
-dbGeneID <- select(Mus.musculus, keys = Assayed_Genes, columns = "GENEID", keytype = "SYMBOL")
-dbDE_GENEID <- select(Mus.musculus, keys = DE_Genes, columns = "GENEID", keytype = "SYMBOL")
+dbGeneID <- AnnotationDbi::select(Mus.musculus, keys = Assayed_Genes, columns = "GENEID", keytype = "SYMBOL")
+dbDE_GENEID <- AnnotationDbi::select(Mus.musculus, keys = DE_Genes, columns = "GENEID", keytype = "SYMBOL")
 
 #Create vectors with the GENEID for both the full list of genes and DE genes.
 Assayed_Genes_ID <- as.vector(dbGeneID$GENEID)
@@ -392,10 +392,33 @@ Assayed_Genes_ID <- as.vector(dfTxDb_Gene_Length_Subset$gene_id)
 Gene_Vector <- as.integer(Assayed_Genes_ID %in% DE_Genes_ID)
 names(Gene_Vector) <- Assayed_Genes_ID
 
-
-
 pwf <- nullp(Gene_Vector, bias.data = dfTxDb_Gene_Length_Subset$mean_length, plot.fit = F)
+summary(pwf$pwf)
 
+
+Gene_Vector2 <- as.integer(Assayed_Genes %in% DE_Genes)
+names(Gene_Vector2) <- Assayed_Genes
+
+pwf2 <- nullp(Gene_Vector2, "mm9", "geneSymbol")
+#All the PWF values are lower than 0.018. PWF shows the probability of each gene being differentially expressed based on their length alone. My understanding from the plot created and the summary of values is that due to the small size of the data set and the very few DE genes, the calculation of PWF here cannot give us a lot of accurate information. When plotted, the points are so far apart and do not show any comprehensive trend for gene length. The plot somewhat shows when the length of the genes are longer, the genes are less likely to be differentially expressed (the line curves downwards, opposite from the vignette).
+
+#Let's conduct the GO enrichment analysis and see what happens.
+GO_Results <- goseq(pwf2, "mm9", "geneSymbol", test.cats = "GO:BP")
+
+#Plot the top 10 GO term hits. Give title.
+GO_Results %>% 
+  top_n(10, wt = -over_represented_pvalue) %>% 
+  mutate(hitsPerc = numDEInCat*100/numInCat) %>% 
+  ggplot(aes(x = hitsPerc, 
+             y = term, 
+             color = over_represented_pvalue, 
+             size = numDEInCat)) +
+  geom_point() +
+  expand_limits(x = 0) +
+  labs(x="Hits (%)", y = "GO Terms", color = "p value", size = "Count")
+#Code adapted from https://bioinformatics-core-shared-training.github.io/cruk-summer-school-2020/RNAseq/extended_html/06_Gene_set_testing.html
+
+#We can see that the top 10 GO terms seen in this image showcase a high magnitude immune response. I believe we can interpret this as the differentially expressed genes showcase that the immune response in the samples have been affected. This makes sense as we are looking between luminal and tumor cell samples. I will further explain this in the results and discussion section.
 
 
 
