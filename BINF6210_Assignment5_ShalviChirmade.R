@@ -7,6 +7,13 @@
 
 #### 1- INTRODUCTION ----
 
+#I began my interest in genetic counselling when I was in high school. This came from a small paragraph in my biology textbook and evolved into a career passion. As you may know, genetic counselors are health professionals that help guide patients with understanding and providing information on their genetic reports and/or disorders. This can range from fields of early developmental and birth defects to inherited disorders and familial cancer. I personally have volunteered and worked with genetic counselors after graduating from my BSc and continued to be entranced by the work and research they conduct. My goal was to one-day become a genetic counselor myself until I found the field of bioinformatics and realized I could turn my fascination of human genetic disease into computational analysis. This is the main reason I decided to search for a data set analyzing breast cancer tumors. A comprehensive understanding of how BRCA1 affects the formation of breast and/or ovarian tumors is not complete so research of this kind is important for society. It aids in acquiring knowledge of hereditary and sporadic carcinogenics (Yoshida & Miki, 2004). 
+#BRCA1 is an important gene responsible for DNA repair, cell cycle checkpoints and response to DNA damage (Yoshida & Miki, 2004). It also plays a crucial role in genomic stability; the protein synthesized interacts with its proteome to allow for recognition and repairing of damaged DNA (Jhanwar-Uniyal, 2003). As it interacts with multiple different proteins to carry out this process, it plays an very important role in suppressing tumorigenesis (Jhanwar-Uniyal, 2003). BRCA1 is a well-conserved gene among various species, research in hope to understand its biological process is crucial for humans and other related organisms (Jhanwar-Uniyal, 2003). Some mutations in BRCA1 mask the functional ability of the wild-type allele which causes a higher probability of the individual developing a breast cancer (Jhanwar-Uniyal, 2003). Mutations of tumor-inducing genes, such as BRCA1, allow for an early-onset of breast and/or ovarian cancer in women (Sun et al., 2021). The research conducted by these authors investigate the origin of mammary tumors from the luminal epithelia and compare the gene expression to cells derived from the mammary tumors themselves. The data set derived from this study is what I will be using for this script; it will be described in greater detail in the next section. As for the gene expression analysis being conducted in this script, choosing the correct software tools for statistical analysis is of great importance. I will go into deeper detail about this later on when explaining which software tool I decided to use.
+#The question I would like evaluate for this script is, what are the biological processes of the differentially expressed genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
+
+
+
+
 #Genetic counselling
 #Why choose BRCA1 study
 #Difficulty with data - brief
@@ -286,7 +293,7 @@ par(mfrow = c(1,1))
 #https://master.bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
 #https://bioconductor.org/packages/devel/bioc/vignettes/goseq/inst/doc/goseq.pdf
 #TODO make into bullet points
-#To begin, I researched different RNA sequencing packages available and used the paper by Seyednasrollah et al. as a guideline for selecting a specific software tool. To explain briefly, the paper outlines the most popular software tools currently used for analyzing RNA-sequencing data. The authors used real data to conduct their analysis instead of using simulated data; this accounts for natural variability seen in real-life data and allows the comparison to be more realistic. As the human understanding of variability is imperfect, using this type of real data becomes a large advantage while comparing computational tools. Through their analysis, I decided to use the tool limma by Bioconductor as this package had a high precision level which corresponds to the accuracy of analyzing replicates. The authors also display a proportion of false discoveries for the software tools analyzed and limma displays a low proportion. As I also considered using edgeR by Bioconductor, I decided not to choose this as it shows a varying degree of false discovery proportion between sample types as well as lower precision levels when analyzing replicates. Both limma and edgeR are available packages by Bioconductor and I utilize both of these when conducting my analysis. My main analysis is using the function voom by limma which uses linear regression modeling  while analyzing the read counts for the RNA sequence data (Law et. al., 2014). The functions I use from edgeR are DGEList which helps me covert my data frame downloaded from GEO into a DGEList object and filterByExpression which allows the data to filter out the lowly expressed genes. I also use the package geoseq by Bioconductor to carry out my Gene Ontology analysis which accounts for the gene length bias of our differentially expressed genes. Understanding this vignette and carrying out the analysis was a very new experience for me. It was thoroughly an educational experience and helped me understand the difficulties of using new data objects. I consulted many vignettes and tutorials to be able to carry out the analysis seen in the last figure. of this script. However, this journey has encouraged me to develop new investigative skills and has me excited for my future summer project!
+#To begin, I researched different RNA sequencing packages available and used the paper by Seyednasrollah et al. as a guideline for selecting a specific software tool. To explain briefly, the paper outlines the most popular software tools currently used for analyzing RNA-sequencing data. The authors used real data to conduct their analysis instead of using simulated data; this accounts for natural variability seen in real-life data and allows the comparison to be more realistic. As the human understanding of variability is imperfect, using this type of real data becomes a large advantage while comparing computational tools. Through their analysis, I decided to use the tool limma by Bioconductor as this package had a high precision level which corresponds to the accuracy of analyzing replicates. The authors also display a proportion of false discoveries for the software tools analyzed and limma displays a low proportion. As I also considered using edgeR by Bioconductor, I decided not to choose this as it shows a varying degree of false discovery proportion between sample types as well as lower precision levels when analyzing replicates. Both limma and edgeR are available packages by Bioconductor and I utilize both of these when conducting my analysis. Sun et al. use Cufflinks to carry out their RNA-seq analysis and TopHat for alignment. My main analysis is using the function voom by limma which uses linear regression modeling  while analyzing the read counts for the RNA sequence data (Law et. al., 2014). The functions I use from edgeR are DGEList which helps me covert my data frame downloaded from GEO into a DGEList object and filterByExpression which allows the data to filter out the lowly expressed genes. I also use the package geoseq by Bioconductor to carry out my Gene Ontology analysis which accounts for the gene length bias of our differentially expressed genes. Understanding this vignette and carrying out the analysis was a very new experience for me. It was thoroughly an educational experience and helped me understand the difficulties of using new data objects. I consulted many vignettes and tutorials to be able to carry out the analysis seen in the last figure. of this script. However, this journey has encouraged me to develop new investigative skills and has me excited for my future summer project!
 
 
 
@@ -343,7 +350,7 @@ plotMD(EFit, column = 1, status = dt[,1], main = colnames(EFit)[1], xlim = c(0, 
 
 #A MA plot is an interpretation of the Bland-Altman plot which calculates the agreement between quantitative measures (Giavarina, 2015). The mean and sd of the differences between the measurements are used to calculate the statistical limits (Giavarina, 2015). It is a scatter plot where the x axis displays average of the means and the y axis measures the difference of the paired measurements we calculated earlier when creating our contrast matrix (Giavarina, 2015). As we can see in the colored dots, the red ones display the up-regulated genes and the blue dots show the down-regulated genes.
 
-#A heatmap can also be used to display the differentially expressed genes. We will be using all 54 DE genes. We can utilize the heatmap.s function from the gplots package to create this.
+#A heatmap can also be used to display the differentially expressed genes. We will be using all 54 DE genes. We can utilize the heatmap.2 function from the gplots package to create this.
 dfLCPM <- cpm(DGE_Data, log = T)
 Color_HeatMap <- colorpanel(1000, "blue", "white", "red")
 
@@ -357,7 +364,7 @@ heatmap.2(dfLCPM[DE_Common,],
           lhei = c(2,10),
           dendrogram = "column")
 
-#As we can see, this data set is quite a mess. There are two tumor samples that have clustered with the luminal samples. As I talked about in the Data Acquisition section, both these cell-types are from a BRCA1-deficient mouse; the paper was studying the intratumor variations so a clear distinction of gene expression is not going to be seen. However, we can mildly see a distinction between the up-regulated and down-regulated genes in the tumor and luminal samples. Most of the genes at the top of the plot show an up-regulation in tumor cells and the most of the genes at the bottom of the plot show an up-regulation in the luminal cells. The next step for my analysis is to correlate these differentially expressed genes with their associated GO terms; hopefully we can figure out why the particular genes are either up- or down-regulated in our two groups.
+#As we can see, this data set is quite a mess. There are two tumor samples that have clustered with the luminal samples. As I talked about in the data acquisition section, both these cell-types are from a BRCA1-deficient mouse; the paper was studying the intratumor variations so a very clear distinction of gene expression is not going to be seen. However, we can mildly see a distinction between the up-regulated and down-regulated genes in the tumor and luminal samples. Most of the genes at the top of the plot show an up-regulation in tumor cells and the most of the genes at the bottom of the plot show an up-regulation in the luminal cells. The next step for my analysis is to correlate these differentially expressed genes with their associated GO terms.
 
 
 ##Gene Ontology Analysis
@@ -415,10 +422,11 @@ summary(pwf$pwf)
 Gene_Vector2 <- as.integer(Assayed_Genes %in% DE_Genes)
 names(Gene_Vector2) <- Assayed_Genes
 
-pwf2 <- nullp(Gene_Vector2, "mm9", "geneSymbol")
+pwf2 <- nullp(Gene_Vector2, "mm9", "geneSymbol", plot.fit = F)
 #All the PWF values are lower than 0.018. PWF shows the probability of each gene being differentially expressed based on their length alone. My understanding from the plot created and the summary of values is that due to the small size of the data set and the very few DE genes, the calculation of PWF here cannot give us a lot of accurate information. When plotted, the points are so far apart and do not show any comprehensive trend for gene length. The plot somewhat shows when the length of the genes are longer, the genes are less likely to be differentially expressed (the line curves downwards, opposite from the vignette).
 
 #Let's conduct the GO enrichment analysis and see what happens.
+#I searched and tried for many hours to use use the mm39 mouse genome for this next step. I was unable to find a way to incorporate the new genome into this function. I used mm9 which is the latest mouse reference genome available on the goseq offline database. Hopefully over the next week or the new months (before my project), I can figure out how to utilize the newest reference genome.
 GO_Results <- goseq(pwf2, "mm9", "geneSymbol", test.cats = "GO:BP")
 
 #Plot the top 10 GO term hits. Give title.
@@ -434,11 +442,7 @@ GO_Results %>%
   labs(x="Hits (%)", y = "GO Terms", color = "p value", size = "Count")
 #Code adapted from https://bioinformatics-core-shared-training.github.io/cruk-summer-school-2020/RNAseq/extended_html/06_Gene_set_testing.html
 
-#We can see that the top 10 GO terms seen in this image showcase a high magnitude immune response. I believe we can interpret this as the differentially expressed genes showcase that the immune response in the samples have been affected. This makes sense as we are looking between luminal and tumor cell samples. I will further explain this in the results and discussion section.
-
-
-
-
+#We can see that the top 10 GO terms seen in this image showcase a high magnitude immune response. I believe we can interpret this as the differentially expressed genes seen in our data set, showcase an effect seen on the immune response. This makes sense as we are analyzing the initiation and progression of tumor formation in the mice mammary glands. I will further explain this in the results and discussion section.
 
 
 
@@ -449,7 +453,7 @@ GO_Results %>%
 
 
 
-
+#Compare GO to fig 3E
 
 
 
@@ -496,6 +500,10 @@ GO_Results %>%
 #Giavarina D. (2015). Understanding Bland Altman analysis. Biochemia medica, 25(2), 141–151.
 
 #Yoshida K, Miki Y. Role of BRCA1 and BRCA2 as regulators of DNA repair, transcription, and cell cycle in response to DNA damage. Cancer Sci. 2004 Nov;95(11):866-71.
+
+#Jhanwar-Uniyal M. BRCA1 in cancer, cell cycle and genomic stability. Front Biosci. 2003 Sep 1;8:s1107-17.
+
+
 
 
 
