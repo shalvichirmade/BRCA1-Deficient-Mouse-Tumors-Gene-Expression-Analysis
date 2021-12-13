@@ -1,8 +1,9 @@
 #### BINF 6210 - Assignment 5 - Due Friday December 17, 2021 by 5 pm ----
 # By Shalvi Chirmade
 
-
 ### Gene Expression Analysis on BRCA1-Deficient Mouse Cells
+
+#GitHub link: https://github.com/shalvichirmade/BRCA1-Deficient-Mouse-Tumors-Gene-Expression-Analysis
 
 #### 1- INTRODUCTION ----
 
@@ -101,7 +102,7 @@ Randomly_Sample_Columns <- function(df, str, n){
     select(matches(str)) %>%
     sample(n)
   
-  #Add dfOutput to the global enviornment using the str as the name of the data frame
+  #Add dfOutput to the global environment using the str as the name of the data frame
   assign(name, data.frame(dfOutput), envir = .GlobalEnv)
   
 }
@@ -122,7 +123,7 @@ dfData <- cbind(dfSC1_, dfSC2_, dfSC4_, dfSC6_, dfSC5_, dfSC7_, dfSC9_, dfSC10_)
 #Remove the data frames no longer needed.
 rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_,name)
 
-#Convert data frame into a DGE object for gene expression analysis. This cn be done using the DGEList function from edgeR. The input data frame is the one we just created, dfData and the groupings are the cell type, so either luminal or tumor.
+#Convert data frame into a DGE object for gene expression analysis. This cn be done using the DGEList function from edgeR. The input data frame is the one we just created, dfData, and the groupings are the cell type, so either luminal or tumor.
 
 #This vector is to label each mouse sample type, luminal or tumor.
 group <- rep(c("tumor", "luminal"), each = 12)
@@ -131,7 +132,8 @@ group <- rep(c("tumor", "luminal"), each = 12)
 DGE_Data <- DGEList(dfData, group = group)
 #Check to see if this worked.
 DGE_Data
-#Can view each individual element of this list as well.
+#Can view each individual element of this list as well. 
+#TODO - view small amount for RM
 View(DGE_Data$counts)
 View(DGE_Data$samples)
 
@@ -159,6 +161,7 @@ mean(DGE_Data$samples$lib.size) #1651024
 #Converting the counts to cpm and lcpm.
 dfCPM <- cpm(DGE_Data)
 dfLCPM <- cpm(DGE_Data, log = T)
+#TODO display head of each for RM
 #You can see that in the cpm matrix, all the 0 gene expression values remained 0 but in the lcpm matrix, this has been transformed to a more relational data set; it is useful when creating exploratory plots. It reduces the inter-sample changes and prevents a large separation between the lowest and highest count values. 
 
 #Calculating the L and M parameters used in the lcpm calculations; it will be used for generating read density figures later on.
@@ -178,7 +181,9 @@ SC9_lib <- mean(DGE_Data$samples$lib.size[19:21])
 SC10_lib <- mean(DGE_Data$samples$lib.size[22:24])
 
 #Create a data frame containing the information needed to create a visualization.
-dfLib <- data.frame(name = SC_Names, size = rbind(SC1_lib, SC2_lib, SC4_lib, SC6_lib, SC5_lib, SC7_lib, SC9_lib, SC10_lib), cell_type = c("tumor","tumor", "tumor", "tumor", "luminal", "luminal", "luminal", "luminal"))
+dfLib <- data.frame(name = SC_Names, 
+                    size = rbind(SC1_lib, SC2_lib, SC4_lib, SC6_lib, SC5_lib, SC7_lib, SC9_lib, SC10_lib), 
+                    cell_type = c("tumor","tumor", "tumor", "tumor", "luminal", "luminal", "luminal", "luminal"))
 
 ggplot(dfLib, aes(x = factor(name, levels = SC_Names), y = size, fill = cell_type)) +
   geom_bar(stat = "identity") +
@@ -192,23 +197,23 @@ ggplot(dfLib, aes(x = factor(name, levels = SC_Names), y = size, fill = cell_typ
 table(rowSums(DGE_Data$counts == 0) == 24)
 #There are 7429 genes with zero expression. These will be deleted from our data set as they can hinder our downstream analysis.
 
-#This function, filterByExpr from the edgeR package, allows us to filter out the lowly expressed genes while still maintaining a large amount of data for analysis. It creates a logical vector displaying the rows to be kept and removed.
+#The function, filterByExpr from the edgeR package, allows us to filter out the lowly expressed genes while still maintaining a large amount of data for analysis. It creates a logical vector displaying the rows to be kept and removed.
 KeepExprs <- filterByExpr(DGE_Data, group = group)
 DGE_Data <- DGE_Data[KeepExprs,, keep.lib.sizes = F]
 
 #Let's compare the amount of genes we lost to the number that had zero counts in all samples.
 dim(DGE_Data) #3382 24
 (21004-3382)/21004 * 100 #Removed 83.9% of the genes..
-#It has removed a SUBSTANTIAL amount of genes! After re-analyzing the original data set, I came to realize that most of the rows had values of 0 throughout each gene. This could be because I have only taken a small subset of the samples actually analyzed by the authors of the paper or it could be the due to the quality of reads attained by the authors while carrying out the experiment. I am going to continue my analysis using the 3400 genes I do have in this data as it should still be able to yield functional plots for my interpretation. If I am obstructed with errors, I will have to re-evaluate this data set or the filtration step itself. 
+#It has removed a SUBSTANTIAL amount of genes! After re-analyzing the original data set, I came to realize that most of the rows had values of 0 throughout each gene. This could be because I have only taken a small subset of the samples actually analyzed by the authors of the paper or it could be the due to the quality of reads attained by the authors while carrying out the experiment. I am going to continue my analysis using the 3382 genes I do have in this data as it should still be able to yield functional plots for my interpretation. If I am obstructed with errors, I will have to re-evaluate this data set or the filtration step itself. 
 
 #I will re-try this step and reduce the minimum count to 5 as the default is set to 10. I hope we notice a fewer amount of genes being discarded.
 # KeepExprs <- filterByExpr(DGE_Data, group = group, min.count = 5)
 # DGE_Data <- DGE_Data[KeepExprs,, keep.lib.sizes = F]
 # dim(DGE_Data) #3914 24
 # (21004-3914)/21004 * 100 #81.4%
-#As the number of samples barely reduced. I will keep the default minimum count as it is recommended by the vignette for a more accurate downstream analysis. The vignette also states that the genes retained have counts in mostly all samples for the same grouping. In our case, these groupings would be luminal and tumor. So if a gene has multiple zero counts for all the luminal or tumor samples, this gene would be disregarded. If the gene is of interest to the study, most of the samples from the same groupings should have a count associated. If not, then the count for that gene could be a rogue value. After reading this, I re-checked to make sure I made the correct groupings based on the paper and the GEO database; as the authors did not specifically specify what each sample corresponds to, my speculations could be inaccurate. Furthermore, the vignette data set lost about 60% of their data during this filtration step so my assumptions could be the right choice. They also mention that a lower library size can be a factor of losing more data as there is less information to evaluate. Let's move on and see what our current data set can provide us.
+#As the number of samples barely increased, I will keep the default minimum count as it is recommended by the vignette for a more accurate downstream analysis. The vignette also states that the genes retained have counts in mostly all samples for the same grouping. In our case, these groupings would be luminal and tumor. So if a gene has multiple zero counts for all the luminal or tumor samples, this gene would be disregarded. If the gene is of interest to the study, most of the samples from the same groupings should have a count associated. If not, then the count for that gene could be a rogue value. After reading this, I re-checked to make sure I made the correct groupings based on the paper and the GEO database; as the authors did not specifically specify what each sample corresponds to, my speculations could be inaccurate. Furthermore, the vignette data set lost more than 60% of their data during this filtration step so my assumptions could be the right choice. They also mention that a lower library size can be a factor of losing more data as there is less information to evaluate. Let's move on and see what our current data set can provide us.
 
-#I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code comes from the vignette for RNA-Seq analysis by Bioconductor.
+#I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code is adapted from the vignette for RNA-Seq analysis by Bioconductor.
 
 lcpm.cutoff <- log2(10/M + 2/L)
 nsamples <- ncol(DGE_Data)
@@ -239,12 +244,13 @@ legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't
 
 #The next step in our quality control is normalization.
 
-#Normalization is carried out to allow for a reasonably similar expression pattern among all the samples being analyzed. As we saw in the bar plot, there were a few samples with lower library size and one with almost half of the largest library. This can occur from external factors during the experiment such as sequencing depth and even GC count (Evans et al., 2017). The main reason for normalization is to showcase the true differences in samples instead of using the raw values given by the instrument (Evans et al., 2017). Another reason for the use normalization is that the variance in gene counts can be from the outcome of differential coverage instead of differential gene expression (Evans et al., 2017). THe vignette uses the method of Trimmed Mean of the M-values (TMM) where a sample is chosen as a reference and fold-changes are calculated relative to this sample (Evans et al., 2017). Apparently this method of usage is known only from being used in the edgeR package, which is the one we are using today. This method did not give a good representation of normalized data so I chose TMMwsp instead which is 'TMM with singleton pairing' method. This performs better with data consisting of multiple 0 expression values; as we have seen, this data set is riddled with 0 expression, hence it works better for my further analysis.
+#Normalization is carried out to allow for a reasonably similar expression pattern among all the samples being analyzed. As we saw in the bar plot, there were a few samples with lower library size and one with almost half of the largest library. This can occur from external factors during the experiment such as sequencing depth and even GC count (Evans et al., 2017). The main reason for normalization is to showcase the true differences in samples instead of using the raw values given by the instrument (Evans et al., 2017). Another reason for the use of normalization is that the variance in gene counts can be from the outcome of differential coverage instead of differential gene expression (Evans et al., 2017). The vignette uses the method of Trimmed Mean of the M-values (TMM) where a sample is chosen as a reference and fold-changes are calculated relative to this sample (Evans et al., 2017). Apparently this method of usage is known only from being used in the edgeR package, which is the one we are using today. This method did not give a good representation of normalized data so I chose TMMwsp instead which is 'TMM with singleton pairing' method. This performs better with data consisting of multiple 0 expression values; as we have seen, this data set is riddled with 0 expression, hence it works better for my further analysis.
 
 DGE_Data <- calcNormFactors(DGE_Data, method = "TMMwsp")
 #We see a new element in our DGE_Data object called norm.factors.
 DGE_Data$samples$norm.factors
 
+#TODO comment out image
 #To better visualize the impact of normalization, we will create a boxplot showcasing log-CPM values of expression distribution for both unnormalized and normalized data. We will see that in the unnormalized data, there will be a variance in expression levels but this will be standardized in the normalized image. The DGE object is duplicated to manipulate the already normalized data into showcasing what unnormalized data looks like.
 DGE_Data_2 <- DGE_Data
 DGE_Data_2$samples$norm.factors <- 1 #Setting all the norm factors to 1
@@ -259,9 +265,10 @@ dfLCPM <- cpm(DGE_Data_2, log = T)
 boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab = "Log-cpm")
 par(mfrow = c(1,1))
 
-#We can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested, my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
+#We can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested (gestation period), my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
 
 
+#TODO
 # #Unsupervised clustering of samples - DELETE
 # 
 # #A multi-dimensional scaling (MDS) plot can be created to visualize the similarities and differences in the samples being used. This can be done using the plotMDS function in limma.
