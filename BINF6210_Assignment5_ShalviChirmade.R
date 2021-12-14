@@ -453,7 +453,6 @@ summary(pwf$pwf)
 #Error message: Couldn't grab GO categories automatically.  Please manually specify.
 #As mm39 is not in the offline database of goseq, I would have needed to find the GO categories for each gene manually and create a vector to input into this function. Due to time restraints for this assignment, I decided to use the most recent genome available in the offline goseq database, mm9 to finish my analysis.
 
-
 Gene_Vector2 <- as.integer(Assayed_Genes %in% DE_Genes)
 names(Gene_Vector2) <- Assayed_Genes
 
@@ -492,13 +491,22 @@ GO_Results %>%
 
 
 
+#The question I would like evaluate for this script is, what are the biological processes of the differentially expressed genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
+
+#Objective met - heatmap shows up-and down-regulated genes. Research a few and explain the reason of their expression. GO enrichment analysis shows the processes significantly affected - mostly response to external stimulus and immune response - immune and defense response initiated.
+
+#Voom was carried out on expression comparison of tumor to luminal - significance of these responses makes sense as the body of the mice is getting ready to fight, knows something is wrong.
+
+
+
+
 
 
 #Compare GO to fig 3E
 #Functional profiling of enrichment analysis in the last figure displays the biological process association seen in the differentially expressed genes. According to the official Gene Ontology website, p-value in enrichment analysis calculates the probability that the GO term is seen in the total list of genes inputted. The smaller the p-value, the closer the GO term is associated with the total genes. In our case, the darker the blue, the more significant is the term association in comparison to the whole list of GO terms.
 
 
-
+#Reflection paragraph
 
 
 #### 7- ACKNOWLEDGEMENTS ----
