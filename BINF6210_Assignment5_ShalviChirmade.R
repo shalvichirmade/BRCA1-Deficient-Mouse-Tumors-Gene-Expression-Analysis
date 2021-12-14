@@ -141,8 +141,8 @@ DGE_Data <- DGEList(dfData, group = group)
 DGE_Data
 #Can view each individual element of this list as well. 
 #TODO - view small amount for RM
-View(DGE_Data$counts)
-View(DGE_Data$samples)
+head(DGE_Data$counts, 5)
+head(DGE_Data$samples, 5)
 
 #Extract column names for later analysis. 
 samplenames <- colnames(DGE_Data$counts)
@@ -168,7 +168,9 @@ mean(DGE_Data$samples$lib.size) #1651024
 #Converting the counts to cpm and lcpm.
 dfCPM <- cpm(DGE_Data)
 dfLCPM <- cpm(DGE_Data, log = T)
-#TODO display head of each for RM
+#Let's look at them.
+head(dfCPM, 5)
+head(dfLCPM, 5)
 #You can see that in the cpm matrix, all the 0 gene expression values remained 0 but in the lcpm matrix, this has been transformed to a more relational data set; it is useful when creating exploratory plots. It reduces the inter-sample changes and prevents a large separation between the lowest and highest count values. 
 
 #Calculating the L and M parameters used in the lcpm calculations; it will be used for generating read density figures later on.
@@ -177,7 +179,7 @@ M <- median(DGE_Data$samples$lib.size) * 1e-6
 #The library size for this data set is very very low in comparison to the vignette data set. This has about 1.6 million on average while the vignette data set was at 45.5 million. We will see how this is affected when we compare the genes lost during filtration in the next step.
 
 #Create a bar plot showing the difference in library size.
-#The average library size for each mouse.
+#The average library size for each mouse. I was going to make this via lapply but I was confused as to how to change the ranges with each iteration without using a for loop.
 SC1_lib <- mean(DGE_Data$samples$lib.size[1:3])
 SC2_lib <- mean(DGE_Data$samples$lib.size[4:6])
 SC4_lib <- mean(DGE_Data$samples$lib.size[7:9])
@@ -189,15 +191,20 @@ SC10_lib <- mean(DGE_Data$samples$lib.size[22:24])
 
 #Create a data frame containing the information needed to create a visualization.
 dfLib <- data.frame(name = SC_Names, 
-                    size = rbind(SC1_lib, SC2_lib, SC4_lib, SC6_lib, SC5_lib, SC7_lib, SC9_lib, SC10_lib), 
-                    cell_type = c("tumor","tumor", "tumor", "tumor", "luminal", "luminal", "luminal", "luminal"))
+                    size = rbind(SC1_lib, SC2_lib, SC4_lib, SC5_lib, SC6_lib, SC7_lib, SC9_lib, SC10_lib), 
+                    cell_type = c("tumor","tumor", "tumor", "luminal", "tumor", "luminal", "luminal", "luminal"))
 
-ggplot(dfLib, aes(x = factor(name, levels = SC_Names), y = size, fill = cell_type)) +
+dfLib %>% ggplot(aes(x = factor(name, levels = SC_Names), y = size, fill = cell_type)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(name = "Cell-type", values = c("#47E0E5", "#62E547")) +
   theme_bw() +
   labs(x = "Mouse Name", y = "Library Size", title = "Library Size in Samples") 
 #The distribution of these library sizes on average per cell-type is not noticeably different. There is one sample from each that has a lower library size; this can be due to the fact that I randomly selected three samples from each mouse. If we had used the full data set, we may not see this distribution.
+
+#I want to see the average library size for each grouping and see if we have  similar numbers.
+mean(SC5_lib, SC7_lib, SC9_lib, SC10_lib) #luminal - 1504943
+mean(SC1_lib, SC2_lib, SC4_lib, SC6_lib) #tumor - 1905406
+#Their average is very similar so we won't worry about the individual variation.
 
 
 #Let's determine if there are any genes that have zero expression in all samples.
@@ -221,7 +228,6 @@ dim(DGE_Data) #3382 24
 #As the number of samples barely increased, I will keep the default minimum count as it is recommended by the vignette for a more accurate downstream analysis. The vignette also states that the genes retained have counts in mostly all samples for the same grouping. In our case, these groupings would be luminal and tumor. So if a gene has multiple zero counts for all the luminal and tumor samples, this gene would be disregarded. If the gene is of interest to the study, most of the samples from the same groupings should have a count associated. If not, then the count for that gene could be a rogue value. This would mean that the expression of the particular gene cannot depict a reliable conclusion as it may not play a major role in our analysis. After reading this, I re-checked to make sure I made the correct groupings based on the paper and the GEO database; as the authors did not specifically specify what each sample corresponds to, my speculations could be inaccurate. Furthermore, the vignette data set lost more than 60% of their data during this filtration step so my assumptions could be the right choice. They also mention that a lower library size can be a factor of losing more data as there is less information to evaluate. Let's move on and see what our current data set can provide us.
 
 #I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code is adapted from the vignette for RNA-Seq analysis by Bioconductor.
-
 lcpm.cutoff <- log2(10/M + 2/L)
 nsamples <- ncol(DGE_Data)
 col <- colorRampPalette(brewer.pal(12, "Paired")) (nsamples) #Add more colors to the palette.
@@ -245,7 +251,7 @@ for (i in 2:nsamples){
 }
 legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75) #legends don't show in zoom
 
-#We can see a drastic difference between the raw data and the filtered. A large amount of data were at zero to low values. We can also see a varying expression for each sample; this can account to the quality of the data from this study.
+#We can see a drastic difference between the raw data and the filtered. A large amount of data were at zero to low values. We can also see a varying expression for each sample; this can account to the quality of the data from this study and the difference in their individual library size.
 
 
 
@@ -272,18 +278,10 @@ dfLCPM <- cpm(DGE_Data_2, log = T)
 boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab = "Log-cpm")
 par(mfrow = c(1,1))
 
-#We can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested (gestation period), my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
+#When plotted, we can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested (gestation period), my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
 
+#I had also created a multi-dimensional scaling(MDS) visualization to display the similarities and differences in the samples being used. This was done using the plotMDS function in limma. However, I decided to delete the plot from the assignment as there was no clear distinction between the two groupings of the samples. Two of the tumor samples were grouped together with the luminal samples; as I mentioned before, I am unable to differentiate the gestation period of each mouse sample, so this could be a reason as to why two samples grouped irregularly.
 
-#TODO
-# #Unsupervised clustering of samples - DELETE
-# 
-# #A multi-dimensional scaling (MDS) plot can be created to visualize the similarities and differences in the samples being used. This can be done using the plotMDS function in limma.
-#dfLCPM <- cpm(DGE_Data, log = T)
-# Color_By_Group <- group
-# levels(Color_By_Group) <- brewer.pal(2, "Spectral") #Colorblind friendly
-# Color_By_Group <- as.character(Color_By_Group)
-# plotMDS(dfLCPM, labels = group, col = levels(Color_By_Group), main = "Sample Groups")
 
 
 
@@ -302,26 +300,34 @@ par(mfrow = c(1,1))
 #The main analysis of this script is showcasing the genes that are differentially expressed among the two groupings of our data, tumor and luminal. For this, we are in the assumption that our data is normally distributed. First we create a design matrix for the cell-type groupings. I used the vignette (https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html) to help me determine if I need to use an intercept term. I will not include an intercept term as the grouping are not covariates and the models are considered equivalent.
 mtDesign <- model.matrix(~0+group)
 colnames(mtDesign) <- gsub("group", "", colnames(mtDesign))
-mtDesign
+head(mtDesign)
 
 #We have to set up model contrasts for the our groups as they do not have an associated intercept. The makeContrasts function from limma is used to make pairwise comparison between the two cell populations.
 mtContrasts <- makeContrasts(TvsL = tumor - luminal, levels = colnames(mtDesign))
 mtContrasts
 
-#Honestly, I found going along the vignette quite difficult for my data set. As I am not completely sure if my groupings are accurate, I am always worried that my results are incorrect. However, as this assignment is about conducting an analysis along with learning the ups and downs about data sets and packages, I believe that I am learning a lot along the way.
+#Honestly, I found going along the vignette quite difficult for my data set. Each step took a few hours to determine if my arguments are entered correctly or if I have to manipulate my data to input the correct class or even if my results make sense. As I am not completely sure if my groupings are accurate, I am always worried that my results are incorrect. However, as this assignment is about conducting an analysis along with learning the ups and downs about data sets and packages, I believe that I am learning a lot along the way.
 
 
 #Removing heteroscedasticity from count data
 
 #When using raw counts for RNA-seq data, the variance is not considered independent from the mean. For this script, we use the lcpm values where we assume our data is normally distributed. The function, voom, calculates precision weights on the mean-variance dependency by using library size and the normalization factors.
 par(mfrow = c(1,2))
-V_EList <- voom(DGE_Data, mtDesign, plot = T)
+V_EList <- voom(DGE_Data, mtDesign, plot = F, save.plot = T)
+plot(V_EList$voom.xy, 
+     xlab = "Average log of counts", 
+     ylab = "Sqrt (standard deviation)", 
+     main = "voom: Mean-variance trend", 
+     pch = 20, cex = 0.1)
+lines(V_EList$voom.line, col = "red")
 VFit <- lmFit(V_EList, mtDesign)
 VFit <- contrasts.fit(VFit, contrasts = mtContrasts)
 EFit <- eBayes(VFit)
-plotSA(EFit, main = "Final Model: Mean-variance trend")
+plotSA(EFit, main = "Final Model: Mean-variance trend", 
+       ylab = "Sqrt (sigma)", 
+       xlab = "Average log of expression")
 
-#In these plots, the means are plotted on the x axis and the variances are plotted on the y axis. The comparison image shows the distribution before and after voom is applied to the data set. After briefly reading the paper introducing voom (Law et al., 2014), I was unable to understand why the data set before voom has a slight increase trend before decreasing. My understanding of linear models is not adequate enough to have an explanation; if this can be explained, I would really like to understand why. The black dots in each of these plots correlates to a gene in our data set. We can see that this data set is smaller in comparison to the data set used in the vignette. Voom creates an EList object containing various information we have already seen in the DGEList object as well as additional information such as expression values and precision weights.
+#In these plots, the means are plotted on the x axis and the variances are plotted on the y axis. After briefly reading the paper introducing voom (Law et al., 2014), I was unable to understand why the voom plot has a slight increase trend before decreasing. My understanding of linear models is not adequate enough to have an explanation; if this can be explained, I would really like to understand why. In my research, I have come across the downwards trend correlating to inaccurate groupings or the need to filter the data higher.The black dots in each of these plots correlates to a gene in our data set. We can see that this data set is smaller in comparison to the data set used in the vignette. Voom creates an EList object containing various information we have already seen in the DGEList object as well as additional information such as expression values and precision weights.
 
 
 #Examining the number of differentially expressed genes
@@ -329,7 +335,7 @@ plotSA(EFit, main = "Final Model: Mean-variance trend")
 #A simple table can be created using the decideTests function from limma to summarize the number of significantly up- and down-regulated genes. As per usual, significance is cut off at a p-value of 0.05 by default.
 dt <- decideTests(EFit)
 summary(dt)
-#We can see that most of the genes are not significantly different from the two different groupings. This tells us that there are 28 genes that are up-regulated in the tumor samples and 26 down-regulated genes in the tumor samples relative to the luminal samples. This can mean that there only a few gene expressions that are affected in our data set when comparing tumor and luminal samples of mice.
+#We can see that most of the genes are not significantly different in the two groupings. This tells us that there are 28 genes that are up-regulated in the tumor samples and 26 down-regulated genes in the tumor samples relative to the luminal samples. This can mean that there only a few gene expressions that are affected in our data set when comparing tumor and luminal mammary samples of mice.
 
 #This step allows us to extract the differentially expressed gene names. As 0 represents genes that are not differentially expressed, we are looking for the rest.
 DE_Common <- which(dt[,1] != 0)
@@ -337,32 +343,46 @@ length(DE_Common) #54 genes
 DE_Genes <- rownames(EFit$coefficients)[DE_Common] #These are the significantly expressed genes. Storing this vector to use for finding GO terms later on.
 DE_Genes
 
-# TFit <- treat(VFit, lfc = 1)
-# dt2 <- decideTests(TFit)
-# summary(dt2) #7 up and 1 down regulated genes
 
 
 #Displaying the differential expression results graphically
 
 #Limma has a function called plotMD which allows for the genes to be displayed visually by mean-difference plots. This uses log-FC values from our lineal model analysis against the mean lcpm value.
 par(mfrow = c(1,1))
-plotMD(EFit, column = 1, status = dt[,1], main = colnames(EFit)[1], xlim = c(0, 13))
+plotMD(EFit, column = 1, status = dt[,1],
+       main = "Tumor vs Luminal", 
+       xlim = c(0, 13),
+       xlab = "Average log of expression",
+       ylab = "logFC")
+
 
 #A MA plot is an interpretation of the Bland-Altman plot which calculates the agreement between quantitative measures (Giavarina, 2015). The mean and sd of the differences between the measurements are used to calculate the statistical limits (Giavarina, 2015). It is a scatter plot where the x axis displays average of the means and the y axis measures the difference of the paired measurements we calculated earlier when creating our contrast matrix (Giavarina, 2015). As we can see in the colored dots, the red ones display the up-regulated genes and the blue dots show the down-regulated genes.
 
 #A heatmap can also be used to display the differentially expressed genes. We will be using all 54 DE genes. We can utilize the heatmap.2 function from the gplots package to create this.
 dfLCPM <- cpm(DGE_Data, log = T)
-Color_HeatMap <- colorpanel(1000, "blue", "white", "red")
+Color_HeatMap <- colorpanel(1000, "turquoise4", "white", "tomato3")
 
 heatmap.2(dfLCPM[DE_Common,], 
           scale = "row",
           labRow = DE_Genes,
           labCol = group,
+          key = T,
+          key.par = list(mar = c(0,1,5,1)),
           col = Color_HeatMap,
           trace = "none",
           density.info = "none",
           lhei = c(2,10),
-          dendrogram = "column")
+          dendrogram = "column",
+          ColSideColors = rep(c("lightgoldenrod2", "palegreen2"), each = 12))
+
+legend(x = -4, y = 0.6, 
+       title = as.expression(bquote(bold("Groups"))), 
+       legend = c("tumor", "luminal"), 
+       fill = c("lightgoldenrod2", "palegreen2"),
+       cex = 0.7,
+       box.lty = 0, 
+       title.adj = 0.2) 
+#Side note, it took me over two hours to get this right..why are legends so difficult?
 
 #As we can see, this data set is quite a mess. There are two tumor samples that have clustered with the luminal samples. As I talked about in the data acquisition section, both these cell-types are from a BRCA1-deficient mouse; the paper was studying the intratumor variations so a very clear distinction of gene expression is not going to be seen. However, we can mildly see a distinction between the up-regulated and down-regulated genes in the tumor and luminal samples. Most of the genes at the top of the plot show an up-regulation in tumor cells and the most of the genes at the bottom of the plot show an up-regulation in the luminal cells. The next step for my analysis is to correlate these differentially expressed genes with their associated GO terms.
 
