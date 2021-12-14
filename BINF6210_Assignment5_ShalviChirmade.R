@@ -227,6 +227,9 @@ dim(DGE_Data) #3382 24
 # (21004-3914)/21004 * 100 #81.4%
 #As the number of samples barely increased, I will keep the default minimum count as it is recommended by the vignette for a more accurate downstream analysis. The vignette also states that the genes retained have counts in mostly all samples for the same grouping. In our case, these groupings would be luminal and tumor. So if a gene has multiple zero counts for all the luminal and tumor samples, this gene would be disregarded. If the gene is of interest to the study, most of the samples from the same groupings should have a count associated. If not, then the count for that gene could be a rogue value. This would mean that the expression of the particular gene cannot depict a reliable conclusion as it may not play a major role in our analysis. After reading this, I re-checked to make sure I made the correct groupings based on the paper and the GEO database; as the authors did not specifically specify what each sample corresponds to, my speculations could be inaccurate. Furthermore, the vignette data set lost more than 60% of their data during this filtration step so my assumptions could be the right choice. They also mention that a lower library size can be a factor of losing more data as there is less information to evaluate. Let's move on and see what our current data set can provide us.
 
+#Remove variables that are not required.
+rm(SC1_lib, SC2_lib, SC4_lib, SC5_lib, SC6_lib, SC7_lib, SC9_lib, SC10_lib, KeepExprs)
+
 #I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code is adapted from the vignette for RNA-Seq analysis by Bioconductor.
 lcpm.cutoff <- log2(10/M + 2/L)
 nsamples <- ncol(DGE_Data)
@@ -282,7 +285,8 @@ par(mfrow = c(1,1))
 
 #I had also created a multi-dimensional scaling(MDS) visualization to display the similarities and differences in the samples being used. This was done using the plotMDS function in limma. However, I decided to delete the plot from the assignment as there was no clear distinction between the two groupings of the samples. Two of the tumor samples were grouped together with the luminal samples; as I mentioned before, I am unable to differentiate the gestation period of each mouse sample, so this could be a reason as to why two samples grouped irregularly.
 
-
+#Remove variables that are not required for the rest of the analysis.
+rm(DGE_Data_2, dfLCPM_filtered, dfLib, L, M, SC_Names, samplenames)
 
 
 #### 4- MAIN SOFTWARE TOOLS ----
@@ -401,6 +405,7 @@ TxDb(Mus.musculus) <- TxDb.Mmusculus.UCSC.mm39.refGene
 Mus.musculus
 #Can see that the TxDb object has been replaced.
 
+#Obtaining the Gene ID's for each gene vector.
 dbGeneID <- AnnotationDbi::select(Mus.musculus, keys = Assayed_Genes, columns = "GENEID", keytype = "SYMBOL")
 dbDE_GENEID <- AnnotationDbi::select(Mus.musculus, keys = DE_Genes, columns = "GENEID", keytype = "SYMBOL")
 
@@ -424,11 +429,13 @@ head(dfTxDb_Gene_Length, 10)
 dfTxDb_Gene_Length_Subset <- dfTxDb_Gene_Length %>%
   filter(gene_id %in% Assayed_Genes_ID)
 #We can see that many genes have multiple entries. We will have to average the gene lengths for the repeated entries.
-
 dfTxDb_Gene_Length_Subset %<>%
   dplyr::select(gene_id, tx_len) %>%
   group_by(gene_id) %>%
   summarise(mean_length = ceiling(mean(tx_len)))
+
+head(dfTxDb_Gene_Length_Subset, 10)
+dim(dfTxDb_Gene_Length_Subset)
 
 #We can see that not every gene in our Assayed_Genes have an entry in this data frame. As those genes cannot be analyzed for the rest of out script, I will delete those from Gene_Vector.
 Assayed_Genes_ID <- as.vector(dfTxDb_Gene_Length_Subset$gene_id)
@@ -438,29 +445,43 @@ names(Gene_Vector) <- Assayed_Genes_ID
 pwf <- nullp(Gene_Vector, bias.data = dfTxDb_Gene_Length_Subset$mean_length, plot.fit = F)
 summary(pwf$pwf)
 
+#All the PWF values are lower than 0.018. PWF shows the probability of each gene being differentially expressed based on their length alone. My understanding from the plot created and the summary of values is that due to the small size of the data set and the very few DE genes, the calculation of PWF here cannot give us a lot of accurate information. When plotted, the points are so far apart and do not show any comprehensive trend for gene length. The plot somewhat shows when the length of the genes are longer, the genes are less likely to be differentially expressed (the line curves downwards, opposite from the vignette).
+
+#Let's conduct the GO enrichment analysis and see what happens.
+#I searched and tried for many hours to use use the mm39 mouse genome for this next step. I was unable to find a way to incorporate the new genome into this function. I used mm9 which is the latest mouse reference genome available on the goseq offline database. Hopefully over the next week or the new months (before my project), I can figure out how to utilize the newest reference genome.
+#GO_Results_1 <- goseq(pwf = pwf, genome = "mm39", id = "GENEID", test.cats = "GO:BP")
+#Error message: Couldn't grab GO categories automatically.  Please manually specify.
+#As mm39 is not in the offline database of goseq, I would have needed to find the GO categories for each gene manually and create a vector to input into this function. Due to time restraints for this assignment, I decided to use the most recent genome available in the offline goseq database, mm9 to finish my analysis.
+
 
 Gene_Vector2 <- as.integer(Assayed_Genes %in% DE_Genes)
 names(Gene_Vector2) <- Assayed_Genes
 
 pwf2 <- nullp(Gene_Vector2, "mm9", "geneSymbol", plot.fit = F)
-#All the PWF values are lower than 0.018. PWF shows the probability of each gene being differentially expressed based on their length alone. My understanding from the plot created and the summary of values is that due to the small size of the data set and the very few DE genes, the calculation of PWF here cannot give us a lot of accurate information. When plotted, the points are so far apart and do not show any comprehensive trend for gene length. The plot somewhat shows when the length of the genes are longer, the genes are less likely to be differentially expressed (the line curves downwards, opposite from the vignette).
 
-#Let's conduct the GO enrichment analysis and see what happens.
-#I searched and tried for many hours to use use the mm39 mouse genome for this next step. I was unable to find a way to incorporate the new genome into this function. I used mm9 which is the latest mouse reference genome available on the goseq offline database. Hopefully over the next week or the new months (before my project), I can figure out how to utilize the newest reference genome.
 GO_Results <- goseq(pwf2, "mm9", "geneSymbol", test.cats = "GO:BP")
+#Turn off warning messages in RM
 
-#Plot the top 10 GO term hits. Give title.
+#Plot the top 10 GO term hits.
 GO_Results %>% 
-  top_n(10, wt = -over_represented_pvalue) %>% 
+  top_n(10, wt = -over_represented_pvalue) %>% #Young et al., 2010.
   mutate(hitsPerc = numDEInCat*100/numInCat) %>% 
   ggplot(aes(x = hitsPerc, 
              y = term, 
              color = over_represented_pvalue, 
              size = numDEInCat)) +
   geom_point() +
+  scale_x_continuous(breaks = c(0,10,20,30)) +
   expand_limits(x = 0) +
-  labs(x="Hits (%)", y = "GO Terms", color = "p value", size = "Count")
-#Code adapted from https://bioinformatics-core-shared-training.github.io/cruk-summer-school-2020/RNAseq/extended_html/06_Gene_set_testing.html
+  labs(x ="Hits (%)", 
+       y = "GO Terms", 
+       color = "p-value", 
+       size = "Count", 
+       title = "GO Enrichment Analysis")+
+  theme(aspect.ratio = 1.7/1, 
+        axis.text.y = element_text(size = 10)) +
+  scale_y_discrete(labels = function(x) str_wrap(x, width = 20)) #Adapted argument from my first assignment
+
 
 #We can see that the top 10 GO terms seen in this image showcase a high magnitude immune response. I believe we can interpret this as the differentially expressed genes seen in our data set, showcase an effect seen on the immune response. This makes sense as we are analyzing the initiation and progression of tumor formation in the mice mammary glands. I will further explain this in the results and discussion section.
 
@@ -474,6 +495,7 @@ GO_Results %>%
 
 
 #Compare GO to fig 3E
+#Functional profiling of enrichment analysis in the last figure displays the biological process association seen in the differentially expressed genes. According to the official Gene Ontology website, p-value in enrichment analysis calculates the probability that the GO term is seen in the total list of genes inputted. The smaller the p-value, the closer the GO term is associated with the total genes. In our case, the darker the blue, the more significant is the term association in comparison to the whole list of GO terms.
 
 
 
@@ -523,6 +545,7 @@ GO_Results %>%
 
 #Jhanwar-Uniyal M. BRCA1 in cancer, cell cycle and genomic stability. Front Biosci. 2003 Sep 1;8:s1107-17.
 
+#Young, Matthew D, Matthew J Wakefield, Gordon K Smyth, and Alicia Oshlack. 2010. “Gene Ontology Analysis for Rna-Seq: Accounting for Selection Bias.” Genome Biology 11: R14.
 
 
 
