@@ -1,0 +1,340 @@
+---
+title: "Gene Expression Analysis on BRCA1-Deficient Mouse Tumors"
+author: "Shalvi Chirmade"
+date: "December 17, 2021"
+output: pdf_document
+fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+GitHub link :https://github.com/shalvichirmade/BRCA1-Deficient-Mouse-Tumors-Gene-Expression-Analysis
+
+# Introduction
+
+I began my interest in genetic counselling when I was in high school. This came from a small paragraph in my biology textbook and evolved into a career passion. As you may know, genetic counselors are health professionals that help guide patients with understanding and providing information on their genetic reports and/or disorders. This can range from fields of early developmental and birth defects to inherited disorders and familial cancer. I personally have volunteered and worked with genetic counselors after graduating from my BSc and continued to be entranced by the work and research they conduct. My goal was to one-day become a genetic counselor myself until I found the field of bioinformatics and realized I could turn my fascination of human genetic disease into computational analysis. This is the main reason I decided to search for a data set analyzing breast cancer tumors. A comprehensive understanding of how BRCA1 affects the formation of breast and/or ovarian tumors is not complete so research of this kind is important for society. It aids in acquiring knowledge of hereditary and sporadic carcinogenics (Yoshida & Miki, 2004).  
+
+BRCA1 is an important gene responsible for DNA repair, cell cycle checkpoints and response to DNA damage (Yoshida & Miki, 2004). It also plays a crucial role in genomic stability; the protein synthesized interacts with its proteome to allow for recognition and repairing of damaged DNA (Jhanwar-Uniyal, 2003). As it interacts with multiple different proteins to carry out this process, it plays an very important role in suppressing tumorigenesis (Jhanwar-Uniyal, 2003). BRCA1 is a well-conserved gene among various species, research in hope to understand its biological process is crucial for humans and other related organisms (Jhanwar-Uniyal, 2003). Some mutations in BRCA1 mask the functional ability of the wild-type allele which causes a higher probability of the individual developing a breast cancer (Jhanwar-Uniyal, 2003). Mutations of tumor-inducing genes, such as BRCA1, allow for an early-onset of breast and/or ovarian cancer in women (Sun et al., 2021). The research conducted by these authors investigate the origin of mammary tumors from the luminal epithelia and compare the gene expression to cells derived from the mammary tumors themselves. The data set derived from this study is what I will be using for this script; it will be described in greater detail in the next section. As for the gene expression analysis being conducted in this script, choosing the correct software tools for statistical analysis is of great importance. I will go into deeper detail about this later on when explaining which software tool I decided to use.  
+
+The question I would like evaluate for this script is, what are the biological processes of the differentially expressed genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
+
+
+# Data Set
+
+I was searching through the GEO database when I came across this data set (November 22, 2021). It comes from a very interesting paper written by Sun et al. in 2021 titled "Dissecting the heterogeneity and tumorigenesis of BRCA1-deficient mammary tumors via single cell RNA sequencing". This data set was obtained and used by the authors for expression profiling and the understanding of the BRACA1-deficient mouse tumors via RNA sequencing. BRCA1 is a gene known to be tumor-inducing when mutated (Sun et. al., 2021); this can occur either sporadically or be inherited from a parent. This mutation can predispose breast and/or ovarian cancers (Yoshida & Miki, 2004). As the normal function of this gene is involved with DNA repair and apoptosis (Yoshida & Miki, 2004), we can understand how dysfunctional and detrimental a mutation in these regulatory processes can be. BRCA1 is aided by many regulatory proteins and it will be interesting to see if this data set shows differential expression in genes that interact with BRCA1. As all the mice utilized in this data set were BRCA1-deficient (the same cross, strain: C57BL/6 and 129/Sv mixed), the analysis carried out by the authors were on the differential expression between the luminal and tumor cells from their mammary glands. The authors main analysis was to showcase the heterogeneity of these cells in both intra- and inter-tumor levels. They wanted to assess the initiation and progression of tumor formation hence isolating samples from the luminal cells of the mammary gland and the tumor cells from the carcinoma of the same region. The data available on GEO has 477 samples which encompasses samples from eight different mice. Each of these mice are replicates from the same cross I mentioned earlier. There are between 30-60 samples from each mouse which I will discuss in the next section when carrying out my data exploration. As you will see, I found understanding this data set quite difficult. In the published paper, the authors do not correspond the names of the mice chosen to their publicly available data set hence the exact difference between each mouse was very hard to comprehend. The only difference I was able to find, once I went through about 100 of the 477 samples, was only if the sample came from luminal or tumor regions. As the authors also take into account gestation of the mouse, this information was not differentiated in the public data set. For each sample, there is a separate accession display but the description are all the same, which states "Three-to-four month-old female virgin or pregnant at day 12.5 mice were sacrificed". Hence, I was unaware if the mouse was either virgin or 12.5 days pregnant. This confusion carries on during the rest of my analysis as we will see that the differentially expressed genes are very minimal and not highly categorized. My speculation is, due to the fact that I am not explicitly aware of the difference between each sample, I may have grouped the samples in a less efficient way than they were intended. I have only differentiated the samples by luminal or tumor and have not taken into account gestation. I will discuss this further in my final results based on the analysis I accomplish.  
+
+The data set can be found at:
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE148569
+
+
+# Data Acquisition, Exploration, Filtering and Quality Control
+
+## Install Required Packages
+```{r install, echo = T, message = F}
+#Bioconductor packages
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#install.packages("BiocManager")
+#BiocManager::install(c("limma", "Glimma", "edgeR", "goseq", "Mus.musculus",
+#                       "TxDb.Mmusculus.UCSC.mm39.refGene"))
+library(edgeR)
+library(Glimma)
+library(goseq)
+library(limma)
+library(Mus.musculus)
+library(TxDb.Mmusculus.UCSC.mm39.refGene)
+
+#CRAN packages
+#install.packages("gplots")
+library(gplots)
+#install.packages("RColorBrewer")
+library(RColorBrewer)
+#install.packages("R.utils")
+library(R.utils)
+#install.packages("tidyverse")
+library(tidyverse)
+```
+
+
+## Inputting Data
+
+Reading in the data from the GEO database. As I am working on a Mac, it automatically unzips the file hence the file used here is only .txt. This file is provided to you.
+
+```{r data}
+#Load the complete data set into the script.
+dfComplete_Data <- read.delim("GSE148569_scRNAseq_C1_count.txt")
+
+#Inspect the data.
+head(dfComplete_Data, n = c(10, 5))
+```
+There are 477 samples in this data set and 21004 genes analyzed.
+
+This data set has an association to a published paper by Sun et al. This paper is not explicit with the details of this data file so I found it quite difficult to come up with a conclusion for what the data is showing me. I speculate that each of the different SC samples correspond to a different mouse; so SC1, SC2 and so on depict the names of the particular mice. Hence, each sample associated with a particular SC is a sample from that mouse. For example, if we take the first sample from the data frame we visualized above, SC1_01 refers to the 01 sample from mouse SC1. So, sample SC5_29 would mean sample 29 from mouse SC5. Four of these mice have been used for tumor samples and the other four mice have been used for the luminal samples.
+
+After talking with Sally about this data set, we came to a conclusion that the best approach for this assignment would be to randomly select three samples from each mouse for my further analysis. The next section of the code depicts this.
+
+```{r filter}
+#I am going to duplicate the data frame to subset my data.
+dfData <- dfComplete_Data
+#Check dimensions.
+dim(dfData)
+
+#The first step is to make the columns displaying the gene names into the row names.
+rownames(dfData) <- dfData$X
+#Check to see if it worked
+head(rownames(dfData),10)
+
+#Delete the gene name column.
+dfData <- dfData[-1]
+#Check to see if it worked.
+dim(dfData)
+```
+
+## Subset Data Frame
+
+```{r SC names}
+#Create a variable with the different SC names.
+SC_Names <- c("SC1_", "SC2_", "SC4_", "SC5_", "SC6_", "SC7_", "SC9_", "SC10_")
+```
+
+Create a function to randomly select three samples from each mouse. As I have to do this eight times, I thought creating a function would be beneficial. This function can be used for any data frame, for any string to be matched and any number of samples. It will output a new data frame with the name of the string entered in the function.
+```{r Function - subset df}
+Randomly_Sample_Columns <- function(df, str, n){
+  
+  #df - the name of the data frame from which you would like to sample columns
+  
+  #str - the string that you want to search for in the column names. Entered with ""
+  
+  #n - number of columns with the string you would like to randomly sample
+  
+  #Extract the string to use as the name of the data frame to be created
+  name <- paste("df", str, sep = "")
+  
+  dfOutput <- df %>%
+    select(matches(str)) %>%
+    sample(n)
+  
+  #Add dfOutput to the global environment using the str as the name of the data frame
+  assign(name, data.frame(dfOutput), envir = .GlobalEnv)
+  
+}
+```
+
+Using a for loop, create new data frames for each mouse with the help of the new function.
+
+```{r SC for loop}
+set.seed(6210)
+
+for (name in SC_Names) {
+  
+  Randomly_Sample_Columns(dfData, name, 3)
+  
+}
+
+#Combine these new data frames to use for the remainder of the analysis.
+dfData <- cbind(dfSC1_, dfSC2_, dfSC4_, dfSC6_, dfSC5_, dfSC7_, dfSC9_, dfSC10_)
+```
+
+This order is dependent on the type of sample; the first four are tumor and the last four are luminal.
+
+```{r Remove variables}
+#Remove the data frames no longer needed.
+rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_,name)
+```
+
+##Convert data frame into a DGE object for gene expression analysis. 
+
+This can be done using the DGEList function from edgeR. The input data frame is the one we just created, dfData, and the groupings are the cell type, so either luminal or tumor.
+
+```{r DGE object}
+#This vector is to label each mouse sample type, luminal or tumor.
+group <- rep(c("tumor", "luminal"), each = 12)
+
+#Create the DGEList object.
+DGE_Data <- DGEList(dfData, group = group)
+#Check to see if this worked.
+DGE_Data
+#Can view each individual element of this list as well. 
+#TODO - view small amount for RM
+head(DGE_Data$counts, 5)
+head(DGE_Data$samples, 5)
+
+#Extract column names for later analysis. 
+samplenames <- colnames(DGE_Data$counts)
+
+#Remove variables that are no longer needed.
+rm(dfData)
+```
+
+```{r Inspect genes}
+#Check to see if there any any duplicated gene names present in our data set.
+anyDuplicated(rownames(DGE_Data$counts))
+```
+
+As the data set I acquired already had gene names for each row, I did not need to extract these values using the Mus.musculus package.
+
+There are also various gene names in the data set that consist of numbers and then the name Riken; for example, 4931408C20Rik. I do not have much experience working with the mouse genome but according to my research, these belong to names of genes that have not been officially annotated (Hayashizaki, 2003). Riken seems to be a large genomic institute in Japan that collaborates with various other institutes across the world to form comprehensive research on multiple different organisms. When I enter these names in UniProt, the associated gene name are the Rik ones we see here (https://www.uniprot.org/uniprot/E9PWP9).
+
+In general for gene expression analysis, raw counts are not considered accurate values for comparison. Instead, counts per million (cpm) or log2-counts per million (lcpm) are utilized. This allows for the library size to be considered in the creation of these values. Library size is the total number of counts from each sample.
+
+```{r Library size}
+#The total library size for our subset data set is:
+sum(DGE_Data$samples$lib.size) 
+#The average library size for each sample is:
+mean(DGE_Data$samples$lib.size) 
+#Will display library size as a bar plot a little later on.
+```
+
+Converting the counts to cpm and lcpm.
+
+```{r lcpm}
+dfCPM <- cpm(DGE_Data)
+dfLCPM <- cpm(DGE_Data, log = T)
+#Let's look at them.
+head(dfCPM, 5)
+head(dfLCPM, 5)
+```
+
+You can see that in the cpm matrix, all the 0 gene expression values remained 0 but in the lcpm matrix, this has been transformed to a more relational data set; it is useful when creating exploratory plots. It reduces the inter-sample changes and prevents a large separation between the lowest and highest count values. 
+
+Calculating the L and M parameters used in the lcpm calculations; it will be used for generating read density figures later on.
+
+```{r LM}
+L <- mean(DGE_Data$samples$lib.size) * 1e-6
+M <- median(DGE_Data$samples$lib.size) * 1e-6
+```
+
+The library size for this data set is very very low in comparison to the vignette data set. This has about 1.6 million on average while the vignette data set was at 45.5 million. We will see how this is affected when we compare the genes lost during filtration in the next step.
+
+
+##Create a bar plot showing the difference in library size.
+
+The average library size for each mouse. I was going to make this via lapply but I was confused as to how to change the ranges with each iteration without using a for loop.
+
+```{r Library size bar plot}
+SC1_lib <- mean(DGE_Data$samples$lib.size[1:3])
+SC2_lib <- mean(DGE_Data$samples$lib.size[4:6])
+SC4_lib <- mean(DGE_Data$samples$lib.size[7:9])
+SC6_lib <- mean(DGE_Data$samples$lib.size[10:12])
+SC5_lib <- mean(DGE_Data$samples$lib.size[13:15])
+SC7_lib <- mean(DGE_Data$samples$lib.size[16:18])
+SC9_lib <- mean(DGE_Data$samples$lib.size[19:21])
+SC10_lib <- mean(DGE_Data$samples$lib.size[22:24])
+
+#Create a data frame containing the information needed to create a visualization.
+dfLib <- data.frame(name = SC_Names, 
+                    size = rbind(SC1_lib, SC2_lib, SC4_lib, SC5_lib, 
+                                 SC6_lib, SC7_lib, SC9_lib, SC10_lib), 
+                    cell_type = c("tumor","tumor", "tumor", "luminal", 
+                                  "tumor", "luminal", "luminal", "luminal"))
+
+dfLib %>% ggplot(aes(x = factor(name, levels = SC_Names), 
+                     y = size, 
+                     fill = cell_type)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(name = "Cell-type", 
+                    values = c("#47E0E5", "#62E547")) +
+  theme_bw() +
+  labs(x = "Mouse Name", 
+       y = "Library Size", 
+       title = "Library Size in Samples") 
+```
+
+The distribution of these library sizes on average per cell-type is not noticeably different. There is one sample from each that has a lower library size; this can be due to the fact that I randomly selected three samples from each mouse. If we had used the full data set, we may not see this distribution.
+
+I want to see the average library size for each grouping and see if we have  similar numbers.
+
+```{r Mean library}
+#Luminal
+mean(SC5_lib, SC7_lib, SC9_lib, SC10_lib) 
+#Tumor
+mean(SC1_lib, SC2_lib, SC4_lib, SC6_lib)
+```
+
+Their average is very similar so we won't worry about the individual variation.
+
+Let's determine if there are any genes that have zero expression in all samples.
+
+```{r Expression table}
+table(rowSums(DGE_Data$counts == 0) == 24)
+```
+
+There are 7429 genes with zero expression. These will be deleted from our data set as they can hinder our downstream analysis.
+
+The function, filterByExpr from the edgeR package, allows us to filter out the lowly expressed genes while still maintaining a large amount of data for analysis. It creates a logical vector displaying the rows to be kept and removed.
+
+```{r filterbyExpression}
+KeepExprs <- filterByExpr(DGE_Data, group = group)
+DGE_Data <- DGE_Data[KeepExprs,, keep.lib.sizes = F]
+```
+
+Let's compare the amount of genes we lost to the number that had zero counts in all samples.
+
+```{r Genes lost}
+dim(DGE_Data)
+(21004-3382)/21004 * 100 
+```
+It has removed a SUBSTANTIAL amount of genes! After re-analyzing the original data set, I came to realize that most of the rows had values of 0 throughout each gene. This could be because I have only taken a small subset of the samples actually analyzed by the authors of the paper or it could be the due to the quality of reads attained by the authors while carrying out the experiment. I am going to continue my analysis using the 3382 genes I do have in this data as it should still be able to yield functional plots for my interpretation. If I am obstructed with errors, I will have to re-evaluate this data set or the filtration step itself. 
+
+I will re-try this step and reduce the minimum count to 5 as the default is set to 10. I hope we notice a fewer amount of genes being discarded.
+
+```{r Filter repeat}
+# KeepExprs <- filterByExpr(DGE_Data, group = group, min.count = 5)
+# DGE_Data <- DGE_Data[KeepExprs,, keep.lib.sizes = F]
+# dim(DGE_Data) #3914 24
+# (21004-3914)/21004 * 100 #81.4%
+```
+
+As the number of samples barely increased, I will keep the default minimum count as it is recommended by the vignette for a more accurate downstream analysis. The vignette also states that the genes retained have counts in mostly all samples for the same grouping. In our case, these groupings would be luminal and tumor. So if a gene has multiple zero counts for all the luminal and tumor samples, this gene would be disregarded. If the gene is of interest to the study, most of the samples from the same groupings should have a count associated. If not, then the count for that gene could be a rogue value. This would mean that the expression of the particular gene cannot depict a reliable conclusion as it may not play a major role in our analysis. After reading this, I re-checked to make sure I made the correct groupings based on the paper and the GEO database; as the authors did not specifically specify what each sample corresponds to, my speculations could be inaccurate. Furthermore, the vignette data set lost more than 60% of their data during this filtration step so my assumptions could be the right choice. They also mention that a lower library size can be a factor of losing more data as there is less information to evaluate. Let's move on and see what our current data set can provide us.
+
+
+Remove variables that are not required.
+```{r Remove df}
+rm(SC1_lib, SC2_lib, SC4_lib, SC5_lib, SC6_lib, SC7_lib, SC9_lib, SC10_lib, KeepExprs)
+```
+
+
+##Comparison of density reads - before and after filteration
+
+I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code is adapted from the vignette for RNA-Seq analysis by Bioconductor.
+
+```{r Filter density comparison plot}
+lcpm.cutoff <- log2(10/M + 2/L)
+nsamples <- ncol(DGE_Data)
+col <- colorRampPalette(brewer.pal(12, "Paired")) (nsamples) 
+#Add more colors to the palette.
+par(mfrow=c(1,2))
+plot(density(dfLCPM[,1]), 
+     col=col[1], 
+     lwd=2, 
+     ylim=c(0,2), 
+     las=2, main="", xlab="")
+title(main="A. Raw data", xlab="Log-cpm")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(dfLCPM[,i])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75)
+
+dfLCPM_filtered <- cpm(DGE_Data, log=TRUE)
+plot(density(dfLCPM_filtered[,1]), 
+     col=col[1], 
+     lwd=2, 
+     ylim=c(0,2), 
+     las=2, 
+     main="", xlab="")
+title(main="B. Filtered data", xlab="Log-cpm")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(dfLCPM_filtered[,i])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75)
+```
+
+
+
+
+

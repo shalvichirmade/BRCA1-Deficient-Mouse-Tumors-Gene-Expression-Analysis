@@ -12,20 +12,6 @@
 #The question I would like evaluate for this script is, what are the biological processes of the differentially expressed genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
 
 
-
-
-#Genetic counselling
-#Why choose BRCA1 study
-#Difficulty with data - brief
-#Difference in luminal and tumor cells
-#DE question - BRCA1 regulatory proteins DE?
-#What you expect based on your knowledge
-
-
-
-
-
-
 #### 2- DATA SET ----
 
 #I was searching through the GEO database when I came across this data set (November 22, 2021). It comes from a very interesting paper written by Sun et al. in 2021 titled "Dissecting the heterogeneity and tumorigenesis of BRCA1-deficient mammary tumors via single cell RNA sequencing". This data set was obtained and used by the authors for expression profiling and the understanding of the BRACA1-deficient mouse tumors via RNA sequencing. BRCA1 is a gene known to be tumor-inducing when mutated (Sun et. al., 2021); this can occur either sporadically or be inherited from a parent. This mutation can predispose breast and/or ovarian cancers (Yoshida & Miki, 2004). As the normal function of this gene is involved with DNA repair and apoptosis (Yoshida & Miki, 2004), we can understand how dysfunctional and detrimental a mutation in these regulatory processes can be. BRCA1 is aided by many regulatory proteins and it will be interesting to see if this data set shows differential expression in genes that interact with BRCA1. As all the mice utilized in this data set were BRCA1-deficient (the same cross, strain: C57BL/6 and 129/Sv mixed), the analysis carried out by the authors were on the differential expression between the luminal and tumor cells from their mammary glands. The authors main analysis was to showcase the heterogeneity of these cells in both intra- and inter-tumor levels. They wanted to assess the initiation and progression of tumor formation hence isolating samples from the luminal cells of the mammary gland and the tumor cells from the carcinoma of the same region. The data available on GEO has 477 samples which encompasses samples from eight different mice. Each of these mice are replicates from the same cross I mentioned earlier. There are between 30-60 samples from each mouse which I will discuss in the next section when carrying out my data exploration. As you will see, I found understanding this data set quite difficult. In the published paper, the authors do not correspond the names of the mice chosen to their publicly available data set hence the exact difference between each mouse was very hard to comprehend. The only difference I was able to find, once I went through about 100 of the 477 samples, was only if the sample came from luminal or tumor regions. As the authors also take into account gestation of the mouse, this information was not differentiated in the public data set. For each sample, there is a separate accession display but the description are all the same, which states "Three-to-four month-old female virgin or pregnant at day 12.5 mice were sacrificed". Hence, I was unaware if the mouse was either virgin or 12.5 days pregnant. This confusion carries on during the rest of my analysis as we will see that the differentially expressed genes are very minimal and not highly categorized. My speculation is, due to the fact that I am not explicitly aware of the difference between each sample, I may have grouped the samples in a less efficient way than they were intended. I have only differentiated the samples by luminal or tumor and have not taken into account gestation. I will discuss this further in my final results based on the analysis I accomplish.
@@ -191,8 +177,10 @@ SC10_lib <- mean(DGE_Data$samples$lib.size[22:24])
 
 #Create a data frame containing the information needed to create a visualization.
 dfLib <- data.frame(name = SC_Names, 
-                    size = rbind(SC1_lib, SC2_lib, SC4_lib, SC5_lib, SC6_lib, SC7_lib, SC9_lib, SC10_lib), 
-                    cell_type = c("tumor","tumor", "tumor", "luminal", "tumor", "luminal", "luminal", "luminal"))
+                    size = rbind(SC1_lib, SC2_lib, SC4_lib, SC5_lib, 
+                                 SC6_lib, SC7_lib, SC9_lib, SC10_lib), 
+                    cell_type = c("tumor","tumor", "tumor", "luminal", 
+                                  "tumor", "luminal", "luminal", "luminal"))
 
 dfLib %>% ggplot(aes(x = factor(name, levels = SC_Names), y = size, fill = cell_type)) +
   geom_bar(stat = "identity") +
@@ -233,9 +221,14 @@ rm(SC1_lib, SC2_lib, SC4_lib, SC5_lib, SC6_lib, SC7_lib, SC9_lib, SC10_lib, Keep
 #I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code is adapted from the vignette for RNA-Seq analysis by Bioconductor.
 lcpm.cutoff <- log2(10/M + 2/L)
 nsamples <- ncol(DGE_Data)
-col <- colorRampPalette(brewer.pal(12, "Paired")) (nsamples) #Add more colors to the palette.
+col <- colorRampPalette(brewer.pal(12, "Paired")) (nsamples) 
+#Add more colors to the palette.
 par(mfrow=c(1,2))
-plot(density(dfLCPM[,1]), col=col[1], lwd=2, ylim=c(0,2), las=2, main="", xlab="")
+plot(density(dfLCPM[,1]), 
+     col=col[1], 
+     lwd=2, 
+     ylim=c(0,2), 
+     las=2, main="", xlab="")
 title(main="A. Raw data", xlab="Log-cpm")
 abline(v=lcpm.cutoff, lty=3)
 for (i in 2:nsamples){
@@ -245,7 +238,12 @@ for (i in 2:nsamples){
 legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75)
 
 dfLCPM_filtered <- cpm(DGE_Data, log=TRUE)
-plot(density(dfLCPM_filtered[,1]), col=col[1], lwd=2, ylim=c(0,2), las=2, main="", xlab="")
+plot(density(dfLCPM_filtered[,1]), 
+     col=col[1], 
+     lwd=2, 
+     ylim=c(0,2), 
+     las=2, 
+     main="", xlab="")
 title(main="B. Filtered data", xlab="Log-cpm")
 abline(v=lcpm.cutoff, lty=3)
 for (i in 2:nsamples){
