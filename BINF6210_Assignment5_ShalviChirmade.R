@@ -7,9 +7,11 @@
 
 #### 1- INTRODUCTION ----
 
-#I began my interest in genetic counselling when I was in high school. This came from a small paragraph in my biology textbook and evolved into a career passion. As you may know, genetic counselors are health professionals that help guide patients with understanding and providing information on their genetic reports and/or disorders. This can range from fields of early developmental and birth defects to inherited disorders and familial cancer. I personally have volunteered and worked with genetic counselors after graduating from my BSc and continued to be entranced by the work and research they conduct. My goal was to one-day become a genetic counselor myself until I found the field of bioinformatics and realized I could turn my fascination of human genetic disease into computational analysis. This is the main reason I decided to search for a data set analyzing breast cancer tumors. A comprehensive understanding of how BRCA1 affects the formation of breast and/or ovarian tumors is not complete so research of this kind is important for society. It aids in acquiring knowledge of hereditary and sporadic carcinogenics (Yoshida & Miki, 2004). 
+#I began my interest in genetic counselling when I was in high school. This came from a small paragraph in my biology textbook and evolved into a career passion. As you may know, genetic counselors are health professionals that help guide patients with understanding and providing information on their genetic reports and/or disorders. This can range from fields of early developmental and birth defects to inherited disorders and familial cancer. I personally have volunteered and worked with genetic counselors after graduating from my BSc and continued to be entranced by the work and research they conduct. My goal was to one-day become a genetic counselor myself until I found the field of bioinformatics and realized I could turn my fascination of human genetic disease into computational analysis. This is the main reason I decided to search for a data set analyzing breast cancer tumors. A comprehensive understanding of how BRCA1 affects the formation of breast and/or ovarian tumors is not complete so research of this kind is important for society. It aids in acquiring knowledge of hereditary and sporadic carcinomas (Yoshida & Miki, 2004). 
+
 #BRCA1 is an important gene responsible for DNA repair, cell cycle checkpoints and response to DNA damage (Yoshida & Miki, 2004). It also plays a crucial role in genomic stability; the protein synthesized interacts with its proteome to allow for recognition and repairing of damaged DNA (Jhanwar-Uniyal, 2003). As it interacts with multiple different proteins to carry out this process, it plays an very important role in suppressing tumorigenesis (Jhanwar-Uniyal, 2003). BRCA1 is a well-conserved gene among various species, research in hope to understand its biological process is crucial for humans and other related organisms (Jhanwar-Uniyal, 2003). Some mutations in BRCA1 mask the functional ability of the wild-type allele which causes a higher probability of the individual developing a breast cancer (Jhanwar-Uniyal, 2003). Mutations of tumor-inducing genes, such as BRCA1, allow for an early-onset of breast and/or ovarian cancer in women (Sun et al., 2021). The research conducted by these authors investigate the origin of mammary tumors from the luminal epithelia and compare the gene expression to cells derived from the mammary tumors themselves. The data set derived from this study is what I will be using for this script; it will be described in greater detail in the next section. As for the gene expression analysis being conducted in this script, choosing the correct software tools for statistical analysis is of great importance. I will go into deeper detail about this later on when explaining which software tool I decided to use.
-#The question I would like evaluate for this script is, what are the biological processes of the differentially expressed genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
+
+#The question I would like evaluate for this script is, what are the biological processes of the differentially expressed (DE) genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
 
 
 #### 2- DATA SET ----
@@ -319,13 +321,13 @@ V_EList <- voom(DGE_Data, mtDesign, plot = F, save.plot = T)
 plot(V_EList$voom.xy, 
      xlab = "Average log of counts", 
      ylab = "Sqrt (standard deviation)", 
-     main = "voom: Mean-variance trend", 
+     main = "A. voom: Mean-variance trend", 
      pch = 20, cex = 0.1)
 lines(V_EList$voom.line, col = "red")
 VFit <- lmFit(V_EList, mtDesign)
 VFit <- contrasts.fit(VFit, contrasts = mtContrasts)
 EFit <- eBayes(VFit)
-plotSA(EFit, main = "Final Model: Mean-variance trend", 
+plotSA(EFit, main = "B. Final Model: Mean-variance trend", 
        ylab = "Sqrt (sigma)", 
        xlab = "Average log of expression")
 
@@ -401,7 +403,7 @@ Assayed_Genes <- rownames(dfLCPM)
 #As the information I have is the gene names (SYMBOL), I have to use the Mus.musculus package to incorporate the gene names into the TxDb object. I am switching the mm10 TxDb from the Mus.musculus package to the newer mm39 TxDb.
 TxDb(Mus.musculus) <- TxDb.Mmusculus.UCSC.mm39.refGene
 Mus.musculus
-#Can see that the TxDb object has been replaced.
+#Can see that the TxDb object has been replaced from mm10 to mm39.
 
 #Obtaining the Gene ID's for each gene vector.
 dbGeneID <- AnnotationDbi::select(Mus.musculus, keys = Assayed_Genes, columns = "GENEID", keytype = "SYMBOL")
@@ -486,17 +488,18 @@ GO_Results %>%
 
 #### 6- RESULTS AND DISCUSSION ----
 
+#Breast cancers formed due to a mutation in the BRCA1 gene, are mostly likely to have originated in the luminal epithelia of mammary glands (Sun et al., 2021). This is the main reason the authors of the paper generated a RNA-seq workflow to study the differential gene expression between luminal and tumor mammary cells. This was achieved by using BRCA1-deficient mice and obtaining the required samples. The data set I used came from eight different mice, where four mice provided luminal samples and the other mice were used for tumor samples. In my opinion, a better approach would have been to obtain both luminal and tumor samples for each mouse for a more accurate comparison of differential expression. However, with the results we did obtain, we notice a small amount of genes that are seen to be significant. The question for this project was to analyze the differentially expressed genes and to determine if their functional roles were related to  BRCA1 and its biological processes. From our heat map and Gene Ontology enrichment analysis, we can strongly suggest that the DE genes between the tumor and luminal samples do indeed have functional roles in the cell repair and the immune response. I believe this portrays that the DE genes are related to the specific loss of BRCA1 and BRCA1's biological functions. I used the list of differentially expressed genes in Figure 4 and inputted their GO ID's into the Gene Ontology online database to compare the results I received using goseq. As I had to use an older Mus musculus reference genome while programming with the goseq function, there were a few genes that were not found and hence not analyzed. The online analysis gave me the same result as Figure 5 with a few additional biological processes. These were, "animal organ development" and "system development"; these processes correspond to others related to "response to external stimulus" and "immune response"! Another, with a slightly higher p-value, was "negative regulation of epithelial cell proliferation involved in lung morphogenesis". This tells us that most of our statistically significant biological matches correlate to the functions of BRCA1 and showcase how detrimental the loss of proper BRCA1 function can be to the organism. The DE genes affecting epithelial cell proliferation is also a contributing factor to the author's study; it shows that the luminal cells are indeed involved in the initiation of tumorigenesis. According to the 2016 paper by Hein et al., luminal cells respond to tumorigenesis by adapting to their surroundings and are involved in cellular heterogeneity within the tumor. This is an important area of research as most breast cancer patients develop tumors with a vast amount of luminal progenitor cells which can imply major involvement of luminal cells during the formation of mammary tumors (Hein et al., 2016).
+
+#Even though the results of this analysis was successful in answering my original question, we still have to consider the caveats and drawbacks of the data itself and the methodology used.
+
 
 
 
 #The question I would like evaluate for this script is, what are the biological processes of the differentially expressed genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
 
-#Objective met - heatmap shows up-and down-regulated genes. Research a few and explain the reason of their expression. GO enrichment analysis shows the processes significantly affected - mostly response to external stimulus and immune response - immune and defense response initiated.
+
 
 #Voom was carried out on expression comparison of tumor to luminal - significance of these responses makes sense as the body of the mice is getting ready to fight, knows something is wrong.
-
-
-
 
 
 
@@ -509,11 +512,14 @@ GO_Results %>%
 
 #### 7- ACKNOWLEDGEMENTS ----
 
+#https://stackoverflow.com/questions/53177810/r-make-the-text-bold-for-the-legend-and-the-xlab-ylab-parameters-in-a-plot
+#Bold legend
 
+#Young, Matthew D, Matthew J Wakefield, Gordon K Smyth, and Alicia Oshlack. 2010. “Gene Ontology Analysis for Rna-Seq: Accounting for Selection Bias.” Genome Biology 11: R14.
+#GO plot
 
-
-
-
+#http://geneontology.org/docs/go-enrichment-analysis/
+#GO EA
 
 
 #### 8- REFERENCES ----
@@ -551,13 +557,6 @@ GO_Results %>%
 
 #Jhanwar-Uniyal M. BRCA1 in cancer, cell cycle and genomic stability. Front Biosci. 2003 Sep 1;8:s1107-17.
 
-#Young, Matthew D, Matthew J Wakefield, Gordon K Smyth, and Alicia Oshlack. 2010. “Gene Ontology Analysis for Rna-Seq: Accounting for Selection Bias.” Genome Biology 11: R14.
+#Hein, S. M., Haricharan, S., Johnston, A. N., Toneff, M. J., Reddy, J. P., Dong, J., Bu, W., & Li, Y. (2016). Luminal epithelial cells within the mammary gland can produce basal cells upon oncogenic stress. Oncogene, 35(11), 1461–1467.
 
 
-
-
-
-
-
-
-### QUESTIONS TO ASK
