@@ -266,27 +266,27 @@ DGE_Data <- calcNormFactors(DGE_Data, method = "TMMwsp")
 #We see a new element in our DGE_Data object called norm.factors.
 DGE_Data$samples$norm.factors
 
-#TODO comment out image
-#To better visualize the impact of normalization, we will create a boxplot showcasing log-CPM values of expression distribution for both unnormalized and normalized data. We will see that in the unnormalized data, there will be a variance in expression levels but this will be standardized in the normalized image. The DGE object is duplicated to manipulate the already normalized data into showcasing what unnormalized data looks like.
-DGE_Data_2 <- DGE_Data
-DGE_Data_2$samples$norm.factors <- 1 #Setting all the norm factors to 1
-DGE_Data_2$counts[,1] <- ceiling(DGE_Data_2$counts[,1] * 0.05)
-DGE_Data_2$counts[,2] <- DGE_Data_2$counts[,2] * 5
 
-par(mfrow = c(1,2))
-dfLCPM <- cpm(DGE_Data_2, log = T)
-boxplot(dfLCPM, las = 2, col = col, main = "A. Unnormalizaed Data Example", ylab = "Log-cpm") #Using the same colors as the plot above
-DGE_Data_2 <- calcNormFactors(DGE_Data_2, method = "TMMwsp") #Normalizing data in this duplicted DGE object
-dfLCPM <- cpm(DGE_Data_2, log = T)
-boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab = "Log-cpm")
-par(mfrow = c(1,1))
+#To better visualize the impact of normalization, we will create a boxplot showcasing log-CPM values of expression distribution for both unnormalized and normalized data. We will see that in the unnormalized data, there will be a variance in expression levels but this will be standardized in the normalized image. The DGE object is duplicated to manipulate the already normalized data into showcasing what unnormalized data looks like. I have actually commented the plots as I believe other plots in this section better showcase what I would like to portray for this assignment.
+# DGE_Data_2 <- DGE_Data
+# DGE_Data_2$samples$norm.factors <- 1 #Setting all the norm factors to 1
+# DGE_Data_2$counts[,1] <- ceiling(DGE_Data_2$counts[,1] * 0.05)
+# DGE_Data_2$counts[,2] <- DGE_Data_2$counts[,2] * 5
+# 
+# par(mfrow = c(1,2))
+# dfLCPM <- cpm(DGE_Data_2, log = T)
+# boxplot(dfLCPM, las = 2, col = col, main = "A. Unnormalizaed Data Example", ylab = "Log-cpm") #Using the same colors as the plot above
+# DGE_Data_2 <- calcNormFactors(DGE_Data_2, method = "TMMwsp") #Normalizing data in this duplicated DGE object
+# dfLCPM <- cpm(DGE_Data_2, log = T)
+# boxplot(dfLCPM, las = 2, col = col, main = "A. Normalizaed Data Example", ylab = "Log-cpm")
+# par(mfrow = c(1,1))
 
 #When plotted, we can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested (gestation period), my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
 
 #I had also created a multi-dimensional scaling(MDS) visualization to display the similarities and differences in the samples being used. This was done using the plotMDS function in limma. However, I decided to delete the plot from the assignment as there was no clear distinction between the two groupings of the samples. Two of the tumor samples were grouped together with the luminal samples; as I mentioned before, I am unable to differentiate the gestation period of each mouse sample, so this could be a reason as to why two samples grouped irregularly.
 
 #Remove variables that are not required for the rest of the analysis.
-rm(DGE_Data_2, dfLCPM_filtered, dfLib, L, M, SC_Names, samplenames)
+rm(dfLCPM_filtered, dfLib, L, M, SC_Names, samplenames)
 
 
 #### 4- MAIN SOFTWARE TOOLS ----
@@ -316,21 +316,21 @@ mtContrasts
 #Removing heteroscedasticity from count data
 
 #Comment plot
-#When using raw counts for RNA-seq data, the variance is not considered independent from the mean. For this script, we use the lcpm values where we assume our data is normally distributed. The function, voom, calculates precision weights on the mean-variance dependency by using library size and the normalization factors.
-par(mfrow = c(1,2))
+#When using raw counts for RNA-seq data, the variance is not considered independent from the mean. For this script, we use the lcpm values where we assume our data is normally distributed. The function, voom, calculates precision weights on the mean-variance dependency by using library size and the normalization factors. I have commented out the plots as I believe the other plots I have created in the main analysis portray more significant visualizations for this assignment.
+#par(mfrow = c(1,2))
 V_EList <- voom(DGE_Data, mtDesign, plot = F, save.plot = T)
-plot(V_EList$voom.xy, 
-     xlab = "Average log of counts", 
-     ylab = "Sqrt (standard deviation)", 
-     main = "A. voom: Mean-variance trend", 
-     pch = 20, cex = 0.1)
-lines(V_EList$voom.line, col = "red")
+#plot(V_EList$voom.xy, 
+#     xlab = "Average log of counts", 
+#     ylab = "Sqrt (standard deviation)", 
+#     main = "A. voom: Mean-variance trend", 
+#     pch = 20, cex = 0.1)
+#lines(V_EList$voom.line, col = "red")
 VFit <- lmFit(V_EList, mtDesign)
 VFit <- contrasts.fit(VFit, contrasts = mtContrasts)
 EFit <- eBayes(VFit)
-plotSA(EFit, main = "B. Final Model: Mean-variance trend", 
-       ylab = "Sqrt (sigma)", 
-       xlab = "Average log of expression")
+#plotSA(EFit, main = "B. Final Model: Mean-variance trend", 
+#       ylab = "Sqrt (sigma)", 
+#       xlab = "Average log of expression")
 
 #In these plots, the means are plotted on the x axis and the variances are plotted on the y axis. After briefly reading the paper introducing voom (Law et al., 2014), I was unable to understand why the voom plot has a slight increase trend before decreasing. My understanding of linear models is not adequate enough to have an explanation; if this can be explained, I would really like to understand why. In my research, I have come across the downwards trend correlating to inaccurate groupings or the need to filter the data higher.The black dots in each of these plots correlates to a gene in our data set. We can see that this data set is smaller in comparison to the data set used in the vignette. Voom creates an EList object containing various information we have already seen in the DGEList object as well as additional information such as expression values and precision weights.
 
@@ -362,6 +362,7 @@ plotMD(EFit, column = 1, status = dt[,1],
 
 
 #Use this if it works in RM
+dfLCPM <- cpm(DGE_Data, log = T)
 glMDPlot(EFit, coef = 1, 
          status = dt, 
          main = "Tumor vs Luminal", 
@@ -498,64 +499,70 @@ GO_Results %>%
 
 #### 6- RESULTS AND DISCUSSION ----
 
-#Breast cancers formed due to a mutation in the BRCA1 gene, are mostly likely to have originated in the luminal epithelia of mammary glands (Sun et al., 2021). This is the main reason the authors of the paper generated a RNA-seq workflow to study the differential gene expression between luminal and tumor mammary cells. This was achieved by using BRCA1-deficient mice and obtaining the required samples. The data set I used came from eight different mice, where four mice provided luminal samples and the other mice were used for tumor samples. In my opinion, a better approach would have been to obtain both luminal and tumor samples for each mouse for a more accurate comparison of differential expression. However, with the results we did obtain, we notice a small amount of genes that are seen to be significant. The question for this project was to analyze the differentially expressed genes and to determine if their functional roles were related to  BRCA1 and its biological processes. From our heat map and Gene Ontology enrichment analysis, we can strongly suggest that the DE genes between the tumor and luminal samples do indeed have functional roles in the cell repair and the immune response. I believe this portrays that the DE genes are related to the specific loss of BRCA1 and BRCA1's biological functions. I used the list of differentially expressed genes in Figure 4 and inputted their GO ID's into the Gene Ontology online database to compare the results I received using goseq. As I had to use an older Mus musculus reference genome while programming with the goseq function, there were a few genes that were not found and hence not analyzed. The online analysis gave me the same result as Figure 5 with a few additional biological processes. These were, "animal organ development" and "system development"; these processes correspond to others related to "response to external stimulus" and "immune response"! Another, with a slightly higher p-value, was "negative regulation of epithelial cell proliferation involved in lung morphogenesis". This tells us that most of our statistically significant biological matches correlate to the functions of BRCA1 and showcase how detrimental the loss of proper BRCA1 function can be to the organism. The DE genes affecting epithelial cell proliferation is also a contributing factor to the author's study; it shows that the luminal cells are indeed involved in the initiation of tumorigenesis. Some of the biological processes determined to be significant in Figure 5 were also found in Figure 3E by Sun et al. However, their gene enrichment analysis displayed a larger variety of biological processes affected by the loss of BRCA1 in the two cell types. According to the 2016 paper by Hein et al., luminal cells respond to tumorigenesis by adapting to their surroundings and are involved in cellular heterogeneity within the tumor. This is an important area of research as most breast cancer patients develop tumors with a vast amount of luminal progenitor cells which can imply major involvement of luminal cells during the formation of mammary tumors (Hein et al., 2016).
+#Breast cancers that are formed due to a mutation in the BRCA1 gene, are mostly likely to have originated in the luminal epithelia of mammary glands (Sun et al., 2021). This is the main reason the authors of the paper generated a RNA-seq workflow to study the differential gene expression between luminal and tumor mammary cells. This was achieved by using BRCA1-deficient mice and obtaining the required samples. The data set I used came from eight different mice, where four mice provided luminal samples and the other mice were used for tumor samples. In my opinion, a better approach would have been to obtain both luminal and tumor samples from each mouse for a more accurate comparison of differential expression. However, with the results we did obtain, we notice a small amount of genes that are seen to be significant. The question for this project was to analyze the differentially expressed genes and to determine if their functional roles were related to  BRCA1 and its biological processes. From our heat map and Gene Ontology enrichment analysis, we can strongly suggest that the DE genes between the tumor and luminal samples do indeed have functional roles in the cell repair and the immune response. I believe this portrays that the DE genes are related to the specific loss of BRCA1 and Bits biological functions. I used the list of differentially expressed genes in Figure 4 and inputted their GO ID's into the Gene Ontology online database to compare the results I received using goseq. As I had to use an older Mus musculus reference genome while programming with the goseq function, there were a few genes that were not found and hence not analyzed. The online analysis gave me the same result as Figure 5 with a few additional biological processes. These were, "animal organ development" and "system development"; these processes correspond to others related to "response to external stimulus" and "immune response"! Another process, with a slightly higher p-value, was "negative regulation of epithelial cell proliferation involved in lung morphogenesis". This tells us that most of our statistically significant biological matches correlate to the functions of BRCA1 and showcase how detrimental the loss of proper BRCA1 function can be to the organism. The DE genes affecting epithelial cell proliferation is also a contributing factor to the author's study; it shows that the luminal cells are indeed involved in the initiation of tumorigenesis. Some of the biological processes determined to be significant in Figure 5 were also found in Figure 3E by Sun et al. However, their gene enrichment analysis displayed a larger variety of biological processes affected by the loss of BRCA1 in the two cell types. According to the 2016 paper by Hein et al., luminal cells respond to tumorigenesis by adapting to their surroundings and are involved in cellular heterogeneity within the tumor. This is an important area of research as most breast cancer patients develop tumors with a vast amount of luminal progenitor cells which can imply major involvement of luminal cells during the formation of mammary tumors (Hein et al., 2016).
 
-#Even though the results of this analysis was successful in answering my original question, we still have to consider the caveats and drawbacks of the data itself and the methodology used. For the scope of this assignment, I had decided to use only three samples from each mouse tested so the sample size for each grouping was quite small in comparison undertaken by Sun et al. Due to this, we can see a notable difference in the library size of each mouse shown in Figure 1. However, the average library size for each grouping was similar so I determined to carry out the analysis on the subset data. Figure 2 shows the density read comparison before and after data filtration; we can see a large amount of lowly expressed genes in our data set. About 36% of the full data set consisted of zero expression of genes in all samples while the other 48% consisted of genes with low expression. As we calculated, this was a total of 83.9% of genes lost from our original data set and we were left with 3382 genes to analyze for the remainder of the script. As the vignette data set lost more than 60% of their data as well during this filtration step, I was not too concerned about the loss of data; however, their library size was exponentially larger than the one I used. This can also mean that the loss of data could be the result of something fundamental as poor sampling or minimal mice specimens. As each mouse was responsible for over 30 samples each, some of the samples themselves could be of insufficient quality. Another factor to consider is inaccurate grouping of the samples as well; as I only categorized the samples by luminal and tumor (which was the only distinction I could find), I was unable to take into account the gestation of the mice which would have been important when differentiating the groupings during gene expression analysis (voom). As I only had two groupings to work with, my analysis with voom consisted of only one contrast matrix of tumor vs luminal cells. This was visualized in Figure 3 in the form an mean-difference plot. The plot showcases the minimal amount of DE genes found in this data set; the red points show up-regulated genes and the blue points show down-regulated genes in tumor cells compared to the luminal cells. The genes are the ones analyzed in Figures 4 and 5, which we discussed earlier. The interactive plot by Glimma allowed me to analyze each of the DE genes and formulate my strategy for the remainder of the analysis. However, if we had made our filtration step less stringent, there may have been a higher amount of DE genes to analyze with the disadvantage of knowing these genes could include false information.
+#Even though the results of this analysis was successful in answering my original question, we still have to consider the caveats and drawbacks of the data itself and the methodology used. For the scope of this assignment, I had decided to use only three samples from each mouse tested so the sample size for each grouping was quite small in comparison to the analysis undertaken by Sun et al. Due to this, we can see a notable difference in the library size of each mouse shown in Figure 1. However, the average library size for each grouping was similar so I decided to continue my analysis on the subset data. Figure 2 shows the density read comparison before and after data filtration; we can see a large amount of lowly expressed genes in our data set. About 36% of the full data set consisted of zero expression of genes in all samples while the other 48% consisted of genes with low expression. As we calculated, this was a total of 83.9% of genes lost from our original data set and we were left with 3382 genes to analyze for the remainder of the script. As the vignette data set lost more than 60% of their data as well during this filtration step, I was not too concerned about the loss of data; however, their library size was exponentially larger than the one I used. This can also mean that the loss of data could be the result of something fundamental as poor sampling or minimal mice specimens. As each mouse was responsible for over 30 samples each, some of the samples themselves could be of insufficient quality. Another factor to consider is inaccurate grouping of the samples as well; as I only categorized the samples by luminal and tumor (which was the only distinction I could find), I was unable to take into account the gestation of the mice which would have been important when differentiating the groupings during gene expression analysis (voom). As I only had two groupings to work with, my analysis with voom consisted of only one contrast matrix of tumor vs luminal cells. This was visualized in Figure 3 in the form of a mean-difference plot. This plot showcases the minimal amount of DE genes found in the data set; the red points show up-regulated genes and the blue points show down-regulated genes in tumor cells compared to the luminal cells. These are the genes analyzed in Figures 4 and 5, which we discussed earlier. The interactive plot by Glimma allowed me to analyze each of the DE genes and formulate my strategy for the remainder of the analysis. However, if we had made our filtration step less stringent, there may have been a higher amount of DE genes to analyze with the disadvantage of knowing these genes could include false information.
 
 #Overall, this analysis conducted showcased an interesting amount of findings that would be subject to future directional studies. The specific up- and down- regulated genes could be analyzed to determine their exact role in tumorigenesis and how each gene is affected by the loss of BRCA1. If I was going to develop this work into a larger project, or as my PhD thesis, I would first start by using a larger number of mice and extract both luminal and tumor samples from each; I believe this would be a more accurate comparison for the difference in gene expression. I would also take the time to determine the exact arguments and criteria for each step of the analysis to better my methodology and create a thorough conclusion. Based on the enrichment analysis, I would also go further and analyze the pathways of each of the differentially expressed genes and correlate them to functionality of BRCA1 and how its loss affected each pathway. Even the results I was able to create would be a good starting point in analyzing pathway association by using gage or pathfindR. However, the outcome I was able to achieve did aid in answering my original question; the DE genes are functionally associated with the loss of BRCA1 and the formation of tumorigenesis.
-
-
 
 #Reflection: The script showcases the struggle I had while using this data set found on GEO. I believe it is usually difficult to understand the workings of someone else's research when the publicly available data is not properly annotated. This proves how important properly labeling of data is for both yourself, and the others viewing your work. Each sample from this data had its own GEO page associated with it but all the information about the samples was duplicated to say the same for every sample. The only difference I was able to find was the difference in mouse name based on SC number and whether each mouse donated luminal or tumor samples. Working through the vignettes was very difficult because of this; I doubted my every step and was concerned that the results were incorrect. I would re-check and redo every step multiple times just to make sure I was entering the right arguments. Analyzing each outcome was also difficult as my plots varied from the vignette example at almost every step. This was definitely a steep learning curve for me and I hope I can learn from my mistakes to be better for the next time. I look forward to your comments and suggestions.
 
 
 #### 7- ACKNOWLEDGEMENTS ----
 
-#https://stackoverflow.com/questions/53177810/r-make-the-text-bold-for-the-legend-and-the-xlab-ylab-parameters-in-a-plot
-#Bold legend
+#Amanda Meuser - Helped me with understanding R Markdown functions such as adding figure labels.
+
+#Jacqueline May - Support through answering my questions and feedback on my opinions for the assignment.
+
+#Dr. Sarah Adamowicz - 
+#Discussed the nature of my data set and helped me come to a conclusion for my next steps. 
+#RNA-seq script and interpretation helped me understand the limma Bioconductor vignette and mys results.
+
+#Study group: Emily Maier, Nykole Crevits and Patricia Balbon - Continuous encouragement and support while working through this assignment, and the term as a whole.
+
+#Vignettes
+
+#Carlson. M., Aboyoun, P., Pagès, H., Falcon, S., Morgan, M. (2021). Making and Utilizing TxDb Objects. https://bioconductor.org/packages/release/bioc/vignettes/GenomicFeatures/inst/doc/GenomicFeatures.pdf
+
+#Law, C. W., Alhamdoosh, M., Su, S., Dong, X., Tian, L., Smyth, G. K., & Ritchie, M. E. (2016). RNA-seq analysis is easy as 1-2-3 with limma, Glimma and edgeR. F1000Research, 5, ISCB Comm J-1408. https://master.bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
+
+#Law, C. W., Zeglinski, K., Dong, X., Alhamdoosh, M., Smyth, G. K., & Ritchie, M. E. (2020). A guide to creating design matrices for gene expression experiments. F1000Research, 9, 1444. https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html
+
+#Young, M., Wakefield, M., Smyth, G.n & Oshlack, A. (2012). goseq: Gene Ontology testing for RNA-seq datasets. https://bioconductor.org/packages/devel/bioc/vignettes/goseq/inst/doc/goseq.pdf
+
+#https://bioconductor.org/packages/release/data/annotation/manuals/TxDb.Mmusculus.UCSC.mm39.refGene/man/TxDb.Mmusculus.UCSC.mm39.refGene.pdf (No authors for the vignette)
+
+
+#Websites
+
+#Jrakru56, 2016. R: make the text bold for the legend and the xlab & ylab parameters in a plot? https://stackoverflow.com/questions/53177810/r-make-the-text-bold-for-the-legend-and-the-xlab-ylab-parameters-in-a-plot
+
+#Mi H, Huang X, Muruganujan A, Tang H, Mills C, Kang D, Thomas PD. PANTHER version 14: more genomes, a new PANTHER GO-slim and improvements in enrichment analysis tools. Nucleic Acids Res. Jan 2019;47(D1):D419-D426.
 
 #Young, Matthew D, Matthew J Wakefield, Gordon K Smyth, and Alicia Oshlack. 2010. “Gene Ontology Analysis for Rna-Seq: Accounting for Selection Bias.” Genome Biology 11: R14.
 #GO plot
 
-#http://geneontology.org/docs/go-enrichment-analysis/
-#GO EA
+#https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE148569
+#GEO link for obtaining the data set
 
 
 #### 8- REFERENCES ----
 
-#https://master.bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
-#RNASeq Bioconductor vignette
+# Evans, C., Hardin, J., & Stoebel, D. M. (2018). Selecting between-sample RNA-Seq normalization methods from the perspective of their assumptions. Briefings in bioinformatics, 19(5), 776–792.
+ 
+# Giavarina D. (2015). Understanding Bland Altman analysis. Biochemia medica, 25(2), 141–151.
 
-#https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html
-#Design matrices vignette
+# Hayashizaki Y. (2003). RIKEN mouse genome encyclopedia. Mechanisms of ageing and development, 124(1), 93–102.
 
-#https://bioconductor.org/packages/devel/bioc/vignettes/goseq/inst/doc/goseq.pdf
-#goseq vigenette
+# Hein, S. M., Haricharan, S., Johnston, A. N., Toneff, M. J., Reddy, J. P., Dong, J., Bu, W., & Li, Y. (2016). Luminal epithelial cells within the mammary gland can produce basal cells upon oncogenic stress. Oncogene, 35(11), 1461–1467.
 
-#https://bioconductor.org/packages/release/data/annotation/manuals/TxDb.Mmusculus.UCSC.mm39.refGene/man/TxDb.Mmusculus.UCSC.mm39.refGene.pdf
-#mm39 genome vignette
+# Jhanwar-Uniyal M. BRCA1 in cancer, cell cycle and genomic stability. Front Biosci. 2003 Sep 1;8:s1107-17.
 
-#https://bioconductor.org/packages/release/bioc/vignettes/GenomicFeatures/inst/doc/GenomicFeatures.pdf
-#To use TxDB object
+# Law, C. W., Chen, Y., Shi, W., & Smyth, G. K. (2014). voom: Precision weights unlock linear model analysis tools for RNA-seq read counts. Genome biology, 15(2), R29.
 
-#https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE148569
-#Data
+# Sun H, Zeng J, Miao Z, Lei KC, Huang C, Hu L, Su SM, Chan UI, Miao K, Zhang X, Zhang A, Guo S, Chen S, Meng Y, Deng M, Hao W, Lei H, Lin Y, Yang Z, Tang D, Wong KH, Zhang XD, Xu X, Deng CX. Dissecting the heterogeneity and tumorigenesis of BRCA1 deficient mammary tumors via single cell RNA sequencing. Theranostics 2021; 11(20):9967-9987.
 
-#Sun H, Zeng J, Miao Z, Lei KC, Huang C, Hu L, Su SM, Chan UI, Miao K, Zhang X, Zhang A, Guo S, Chen S, Meng Y, Deng M, Hao W, Lei H, Lin Y, Yang Z, Tang D, Wong KH, Zhang XD, Xu X, Deng CX. Dissecting the heterogeneity and tumorigenesis of BRCA1 deficient mammary tumors via single cell RNA sequencing. Theranostics 2021; 11(20):9967-9987.
-#Paper of data
+# Yoshida K, Miki Y. Role of BRCA1 and BRCA2 as regulators of DNA repair, transcription, and cell cycle in response to DNA damage. Cancer Sci. 2004 Nov;95(11):866-71.
 
-#Hayashizaki Y. (2003). RIKEN mouse genome encyclopedia. Mechanisms of ageing and development, 124(1), 93–102.
-
-#Evans, C., Hardin, J., & Stoebel, D. M. (2018). Selecting between-sample RNA-Seq normalization methods from the perspective of their assumptions. Briefings in bioinformatics, 19(5), 776–792.
-
-#Law, C. W., Chen, Y., Shi, W., & Smyth, G. K. (2014). voom: Precision weights unlock linear model analysis tools for RNA-seq read counts. Genome biology, 15(2), R29.
-
-#Giavarina D. (2015). Understanding Bland Altman analysis. Biochemia medica, 25(2), 141–151.
-
-#Yoshida K, Miki Y. Role of BRCA1 and BRCA2 as regulators of DNA repair, transcription, and cell cycle in response to DNA damage. Cancer Sci. 2004 Nov;95(11):866-71.
-
-#Jhanwar-Uniyal M. BRCA1 in cancer, cell cycle and genomic stability. Front Biosci. 2003 Sep 1;8:s1107-17.
-
-#Hein, S. M., Haricharan, S., Johnston, A. N., Toneff, M. J., Reddy, J. P., Dong, J., Bu, W., & Li, Y. (2016). Luminal epithelial cells within the mammary gland can produce basal cells upon oncogenic stress. Oncogene, 35(11), 1461–1467.
 
 
