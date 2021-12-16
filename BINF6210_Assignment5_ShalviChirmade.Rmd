@@ -10,15 +10,15 @@ fig_caption: yes
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-GitHub link :https://github.com/shalvichirmade/BRCA1-Deficient-Mouse-Tumors-Gene-Expression-Analysis
+GitHub link: <https://github.com/shalvichirmade/BRCA1-Deficient-Mouse-Tumors-Gene-Expression-Analysis>
 
 # Introduction
 
-I began my interest in genetic counselling when I was in high school. This came from a small paragraph in my biology textbook and evolved into a career passion. As you may know, genetic counselors are health professionals that help guide patients with understanding and providing information on their genetic reports and/or disorders. This can range from fields of early developmental and birth defects to inherited disorders and familial cancer. I personally have volunteered and worked with genetic counselors after graduating from my BSc and continued to be entranced by the work and research they conduct. My goal was to one-day become a genetic counselor myself until I found the field of bioinformatics and realized I could turn my fascination of human genetic disease into computational analysis. This is the main reason I decided to search for a data set analyzing breast cancer tumors. A comprehensive understanding of how BRCA1 affects the formation of breast and/or ovarian tumors is not complete so research of this kind is important for society. It aids in acquiring knowledge of hereditary and sporadic carcinogenics (Yoshida & Miki, 2004).  
+I began my interest in genetic counselling when I was in high school. This came from a small paragraph in my biology textbook and evolved into a career passion. As you may know, genetic counselors are health professionals that help guide patients with understanding and providing information on their genetic reports and/or disorders. This can range from fields of early developmental and birth defects to inherited disorders and familial cancer. I personally have volunteered and worked with genetic counselors after graduating from my BSc and continued to be entranced by the work and research they conduct. My goal was to one-day become a genetic counselor myself until I found the field of bioinformatics and realized I could turn my fascination of human genetic disease into computational analysis. This is the main reason I decided to search for a data set analyzing breast cancer tumors. A comprehensive understanding of how BRCA1 affects the formation of breast and/or ovarian tumors is not complete so research of this kind is important for society. It aids in acquiring knowledge of hereditary and sporadic carcinomas (Yoshida & Miki, 2004).  
 
 BRCA1 is an important gene responsible for DNA repair, cell cycle checkpoints and response to DNA damage (Yoshida & Miki, 2004). It also plays a crucial role in genomic stability; the protein synthesized interacts with its proteome to allow for recognition and repairing of damaged DNA (Jhanwar-Uniyal, 2003). As it interacts with multiple different proteins to carry out this process, it plays an very important role in suppressing tumorigenesis (Jhanwar-Uniyal, 2003). BRCA1 is a well-conserved gene among various species, research in hope to understand its biological process is crucial for humans and other related organisms (Jhanwar-Uniyal, 2003). Some mutations in BRCA1 mask the functional ability of the wild-type allele which causes a higher probability of the individual developing a breast cancer (Jhanwar-Uniyal, 2003). Mutations of tumor-inducing genes, such as BRCA1, allow for an early-onset of breast and/or ovarian cancer in women (Sun et al., 2021). The research conducted by these authors investigate the origin of mammary tumors from the luminal epithelia and compare the gene expression to cells derived from the mammary tumors themselves. The data set derived from this study is what I will be using for this script; it will be described in greater detail in the next section. As for the gene expression analysis being conducted in this script, choosing the correct software tools for statistical analysis is of great importance. I will go into deeper detail about this later on when explaining which software tool I decided to use.  
 
-The question I would like evaluate for this script is, what are the biological processes of the differentially expressed genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
+The question I would like evaluate for this script is, what are the biological processes of the differentially expressed (DE) genes in this data set? Are the DE genes related to the biological function of BRCA1, i.e., are they part of the individual networks for DNA repair and damage or are their functions on a broader spectrum like immune response or apoptosis? I plan to carry out gene expression analysis using the data set obtained by Sun et al. by utilizing the packages limma and goseq by Bioconductor.
 
 
 # Data Set
@@ -26,13 +26,13 @@ The question I would like evaluate for this script is, what are the biological p
 I was searching through the GEO database when I came across this data set (November 22, 2021). It comes from a very interesting paper written by Sun et al. in 2021 titled "Dissecting the heterogeneity and tumorigenesis of BRCA1-deficient mammary tumors via single cell RNA sequencing". This data set was obtained and used by the authors for expression profiling and the understanding of the BRACA1-deficient mouse tumors via RNA sequencing. BRCA1 is a gene known to be tumor-inducing when mutated (Sun et. al., 2021); this can occur either sporadically or be inherited from a parent. This mutation can predispose breast and/or ovarian cancers (Yoshida & Miki, 2004). As the normal function of this gene is involved with DNA repair and apoptosis (Yoshida & Miki, 2004), we can understand how dysfunctional and detrimental a mutation in these regulatory processes can be. BRCA1 is aided by many regulatory proteins and it will be interesting to see if this data set shows differential expression in genes that interact with BRCA1. As all the mice utilized in this data set were BRCA1-deficient (the same cross, strain: C57BL/6 and 129/Sv mixed), the analysis carried out by the authors were on the differential expression between the luminal and tumor cells from their mammary glands. The authors main analysis was to showcase the heterogeneity of these cells in both intra- and inter-tumor levels. They wanted to assess the initiation and progression of tumor formation hence isolating samples from the luminal cells of the mammary gland and the tumor cells from the carcinoma of the same region. The data available on GEO has 477 samples which encompasses samples from eight different mice. Each of these mice are replicates from the same cross I mentioned earlier. There are between 30-60 samples from each mouse which I will discuss in the next section when carrying out my data exploration. As you will see, I found understanding this data set quite difficult. In the published paper, the authors do not correspond the names of the mice chosen to their publicly available data set hence the exact difference between each mouse was very hard to comprehend. The only difference I was able to find, once I went through about 100 of the 477 samples, was only if the sample came from luminal or tumor regions. As the authors also take into account gestation of the mouse, this information was not differentiated in the public data set. For each sample, there is a separate accession display but the description are all the same, which states "Three-to-four month-old female virgin or pregnant at day 12.5 mice were sacrificed". Hence, I was unaware if the mouse was either virgin or 12.5 days pregnant. This confusion carries on during the rest of my analysis as we will see that the differentially expressed genes are very minimal and not highly categorized. My speculation is, due to the fact that I am not explicitly aware of the difference between each sample, I may have grouped the samples in a less efficient way than they were intended. I have only differentiated the samples by luminal or tumor and have not taken into account gestation. I will discuss this further in my final results based on the analysis I accomplish.  
 
 The data set can be found at:
-https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE148569
+<https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE148569>
 
 
 # Data Acquisition, Exploration, Filtering and Quality Control
 
 ## Install Required Packages
-```{r install, echo = T, message = F}
+```{r Install, echo = T, message = F}
 #Bioconductor packages
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #install.packages("BiocManager")
@@ -61,7 +61,7 @@ library(tidyverse)
 
 Reading in the data from the GEO database. As I am working on a Mac, it automatically unzips the file hence the file used here is only .txt. This file is provided to you.
 
-```{r data}
+```{r Data}
 #Load the complete data set into the script.
 dfComplete_Data <- read.delim("GSE148569_scRNAseq_C1_count.txt")
 
@@ -74,7 +74,7 @@ This data set has an association to a published paper by Sun et al. This paper i
 
 After talking with Sally about this data set, we came to a conclusion that the best approach for this assignment would be to randomly select three samples from each mouse for my further analysis. The next section of the code depicts this.
 
-```{r filter}
+```{r Filter}
 #I am going to duplicate the data frame to subset my data.
 dfData <- dfComplete_Data
 #Check dimensions.
@@ -143,7 +143,7 @@ This order is dependent on the type of sample; the first four are tumor and the 
 rm(dfSC1_, dfSC2_, dfSC4_, dfSC5_, dfSC6_, dfSC7_, dfSC9_, dfSC10_,name)
 ```
 
-##Convert data frame into a DGE object for gene expression analysis. 
+## Convert data frame into a DGE object for gene expression analysis. 
 
 This can be done using the DGEList function from edgeR. The input data frame is the one we just created, dfData, and the groupings are the cell type, so either luminal or tumor.
 
@@ -174,7 +174,7 @@ anyDuplicated(rownames(DGE_Data$counts))
 
 As the data set I acquired already had gene names for each row, I did not need to extract these values using the Mus.musculus package.
 
-There are also various gene names in the data set that consist of numbers and then the name Riken; for example, 4931408C20Rik. I do not have much experience working with the mouse genome but according to my research, these belong to names of genes that have not been officially annotated (Hayashizaki, 2003). Riken seems to be a large genomic institute in Japan that collaborates with various other institutes across the world to form comprehensive research on multiple different organisms. When I enter these names in UniProt, the associated gene name are the Rik ones we see here (https://www.uniprot.org/uniprot/E9PWP9).
+There are also various gene names in the data set that consist of numbers and then the name Riken; for example, 4931408C20Rik. I do not have much experience working with the mouse genome but according to my research, these belong to names of genes that have not been officially annotated (Hayashizaki, 2003). Riken seems to be a large genomic institute in Japan that collaborates with various other institutes across the world to form comprehensive research on multiple different organisms. When I enter these names in UniProt, the associated gene name are the Rik ones we see here (<https://www.uniprot.org/uniprot/E9PWP9>).
 
 In general for gene expression analysis, raw counts are not considered accurate values for comparison. Instead, counts per million (cpm) or log2-counts per million (lcpm) are utilized. This allows for the library size to be considered in the creation of these values. Library size is the total number of counts from each sample.
 
@@ -212,7 +212,7 @@ The library size for this data set is very very low in comparison to the vignett
 
 The average library size for each mouse. I was going to make this via lapply but I was confused as to how to change the ranges with each iteration without using a for loop.
 
-```{r Library size bar plot}
+```{r Library size bar plot, fig.cap = "Bar plot displaying average library size per mouse."}
 SC1_lib <- mean(DGE_Data$samples$lib.size[1:3])
 SC2_lib <- mean(DGE_Data$samples$lib.size[4:6])
 SC4_lib <- mean(DGE_Data$samples$lib.size[7:9])
@@ -299,7 +299,7 @@ rm(SC1_lib, SC2_lib, SC4_lib, SC5_lib, SC6_lib, SC7_lib, SC9_lib, SC10_lib, Keep
 
 I will now produce a figure comparing the density of reads from the raw unfiltered data and the filtered data. This code is adapted from the vignette for RNA-Seq analysis by Bioconductor.
 
-```{r Filter density comparison plot}
+```{r Filter density comparison plot, fig.cap = "Read density comparison plot. A) Shows the unfiltered data; can see a large amount of reads at 0. B) Shows the filtered data; most of the lowly expressed genes have been removed."}
 lcpm.cutoff <- log2(10/M + 2/L)
 nsamples <- ncol(DGE_Data)
 col <- colorRampPalette(brewer.pal(12, "Paired")) (nsamples) 
@@ -316,7 +316,7 @@ for (i in 2:nsamples){
   den <- density(dfLCPM[,i])
   lines(den$x, den$y, col=col[i], lwd=2)
 }
-legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75)
+legend("topright", samplenames, text.col=col, bty="n", cex = 0.75)
 
 dfLCPM_filtered <- cpm(DGE_Data, log=TRUE)
 plot(density(dfLCPM_filtered[,1]), 
@@ -331,10 +331,199 @@ for (i in 2:nsamples){
   den <- density(dfLCPM_filtered[,i])
   lines(den$x, den$y, col=col[i], lwd=2)
 }
-legend("topleft", samplenames, text.col=col, bty="n", cex = 0.75)
+legend("topright", samplenames, text.col=col, bty="n", cex = 0.75)
+```
+
+We can see a drastic difference between the raw data and the filtered. A large amount of data were at zero to low values. We can also see a varying expression for each sample; this can account to the quality of the data from this study and the difference in their individual library size.
+
+
+## Normalization
+
+Normalization is carried out to allow for a reasonably similar expression pattern among all the samples being analyzed. As we saw in the bar plot, there were a few samples with lower library size and one with almost half of the largest library. This can occur from external factors during the experiment such as sequencing depth and even GC count (Evans et al., 2017). The main reason for normalization is to showcase the true differences in samples instead of using the raw values given by the instrument (Evans et al., 2017). Another reason for the use of normalization is that the variance in gene counts can be from the outcome of differential coverage instead of differential gene expression (Evans et al., 2017). The vignette uses the method of Trimmed Mean of the M-values (TMM) where a sample is chosen as a reference and fold-changes are calculated relative to this sample (Evans et al., 2017). Apparently this method of usage is known only from being used in the limma package, which is the one we are using today. This method did not give a good representation of normalized data so I chose TMMwsp instead which is 'TMM with singleton pairing' method. This performs better with data consisting of multiple 0 expression values; as we have seen, this data set is riddled with 0 expression, hence it works better for my further analysis.
+
+```{r Normalization}
+DGE_Data <- calcNormFactors(DGE_Data, method = "TMMwsp")
+#We see a new element in our DGE_Data object called norm.factors.
+DGE_Data$samples$norm.factors
+```
+
+To better visualize the impact of normalization, we will create a boxplot showcasing log-CPM values of expression distribution for both unnormalized and normalized data. We will see that in the unnormalized data, there will be a variance in expression levels but this will be standardized in the normalized image. The DGE object is duplicated to manipulate the already normalized data into showcasing what unnormalized data looks like. I have actually commented the plots as I believe other plots in this section better showcase what I would like to portray for this assignment.
+
+```{r Norm plot}
+# DGE_Data_2 <- DGE_Data
+# DGE_Data_2$samples$norm.factors <- 1 #Setting all the norm factors to 1
+# DGE_Data_2$counts[,1] <- ceiling(DGE_Data_2$counts[,1] * 0.05)
+# DGE_Data_2$counts[,2] <- DGE_Data_2$counts[,2] * 5
+# 
+# par(mfrow = c(1,2))
+# dfLCPM <- cpm(DGE_Data_2, log = T)
+# boxplot(dfLCPM, las = 2, col = col,
+#         main = "A. Unnormalizaed Data Example", 
+#         ylab = "Log-cpm") #Using the same colors as the plot above
+# DGE_Data_2 <- calcNormFactors(DGE_Data_2, method = "TMMwsp") 
+# Normalizing data in this duplicated DGE object
+# dfLCPM <- cpm(DGE_Data_2, log = T)
+# boxplot(dfLCPM, las = 2, col = col, 
+#         main = "A. Normalizaed Data Example", 
+#         ylab = "Log-cpm")
+# par(mfrow = c(1,1))
+```
+
+When plotted, we can see that the mean values of all the samples still do not line up as well as the example data set in this vignette, however, this could be a result of the quality of data collection done by the authors of the paper or even the mice themselves. We can see a noticeable difference in mouse 10 compared to the others. As the authors did not lay out the exact differences between the mice tested (gestation period), my speculation is that this mouse was affected by some other external factor compared to the other mice in its category.
+
+I had also created a multi-dimensional scaling(MDS) visualization to display the similarities and differences in the samples being used. This was done using the plotMDS function in limma. However, I decided to delete the plot from the assignment as there was no clear distinction between the two groupings of the samples. Two of the tumor samples were grouped together with the luminal samples; as I mentioned before, I am unable to differentiate the gestation period of each mouse sample, so this could be a reason as to why two samples grouped irregularly.
+
+```{r Remove few variables}
+rm(dfLCPM_filtered, dfLib, L, M, SC_Names, samplenames)
 ```
 
 
+# Main Software Tools
 
+The main vignettes I decided to adapt for this script are both from Bioconductor: RNA-seq analysis is easy as 1-2-3 with limma, Glimma and edgeR, and goseq: Gene Ontology testing for RNA-seq data sets.
+
+* <https://master.bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html>
+
+* <https://bioconductor.org/packages/devel/bioc/vignettes/goseq/inst/doc/goseq.pdf>
+
+To begin, I researched different RNA sequencing packages available and used the paper by Seyednasrollah et al. as a guideline for selecting a specific software tool. To explain briefly, the paper outlines the most popular software tools currently used for analyzing RNA-sequencing data. The authors used real data to conduct their analysis instead of using simulated data; this accounts for natural variability seen in real-life data and allows the comparison to be more realistic. As the human understanding of variability is imperfect, using this type of real data becomes a large advantage while comparing computational tools. Through their analysis, I decided to use the tool limma by Bioconductor as this package had a high precision level which corresponds to the accuracy of analyzing replicates. The authors also display a proportion of false discoveries for the software tools analyzed and limma displays a low proportion. As I also considered using edgeR by Bioconductor, I decided not to choose this as it shows a varying degree of false discovery proportion between sample types as well as lower precision levels when analyzing replicates. Both limma and edgeR are available packages by Bioconductor and I utilize both of these when conducting my analysis. Sun et al. use Cufflinks to carry out their RNA-seq analysis and TopHat for alignment. My main analysis is using the function voom by limma which uses linear regression modeling  while analyzing the read counts for the RNA sequence data (Law et. al., 2014). The functions I use from edgeR are DGEList which helps me covert my data frame downloaded from GEO into a DGEList object and filterByExpression which allows the data to filter out the lowly expressed genes. I also use the package geoseq by Bioconductor to carry out my Gene Ontology analysis which accounts for the gene length bias of our differentially expressed genes. Understanding this vignette and carrying out the analysis was a very new experience for me. It was thoroughly an educational experience and helped me understand the difficulties of using new data objects. I consulted many vignettes and tutorials to be able to carry out the analysis seen in the last figure. of this script. However, this journey has encouraged me to develop new investigative skills and has me excited for my future summer project!
+
+
+# Main Analysis
+
+The main analysis of this script is showcasing the genes that are differentially expressed among the two groupings of our data, tumor and luminal. For this, we are in the assumption that our data is normally distributed. First we create a design matrix for the cell-type groupings. I used the vignette (<https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html>) to help me determine if I need to use an intercept term. I will not include an intercept term as the grouping are not covariates and the models are considered equivalent.
+
+```{r Model matrix}
+mtDesign <- model.matrix(~0+group)
+colnames(mtDesign) <- gsub("group", "", colnames(mtDesign))
+head(mtDesign)
+```
+
+We have to set up model contrasts for the our groups as they do not have an associated intercept. The makeContrasts function from limma is used to make pairwise comparison between the two cell populations.
+
+```{r makeContrasts}
+mtContrasts <- makeContrasts(TvsL = tumor - luminal, levels = colnames(mtDesign))
+mtContrasts
+```
+
+Honestly, I found going along the vignette quite difficult for my data set. Each step took a few hours to determine if my arguments are entered correctly or if I have to manipulate my data to input the correct class or even if my results make sense. As I am not completely sure if my groupings are accurate, I am always worried that my results are incorrect. However, as this assignment is about conducting an analysis along with learning the ups and downs about data sets and packages, I believe that I am learning a lot along the way.
+
+## Removing heteroscedasticity from count data
+
+When using raw counts for RNA-seq data, the variance is not considered independent from the mean. For this script, we use the lcpm values where we assume our data is normally distributed. The function, voom, calculates precision weights on the mean-variance dependency by using library size and the normalization factors. I have commented out the plots as I believe the other plots I have created in the main analysis portray more significant visualizations for this assignment.
+
+```{r Voom}
+#par(mfrow = c(1,2))
+V_EList <- voom(DGE_Data, mtDesign, plot = F, save.plot = T)
+#plot(V_EList$voom.xy, 
+#     xlab = "Average log of counts", 
+#     ylab = "Sqrt (standard deviation)", 
+#     main = "A. voom: Mean-variance trend", 
+#     pch = 20, cex = 0.1)
+#lines(V_EList$voom.line, col = "red")
+VFit <- lmFit(V_EList, mtDesign)
+VFit <- contrasts.fit(VFit, contrasts = mtContrasts)
+EFit <- eBayes(VFit)
+#plotSA(EFit, main = "B. Final Model: Mean-variance trend", 
+#       ylab = "Sqrt (sigma)", 
+#       xlab = "Average log of expression")
+```
+
+In these plots, the means are plotted on the x axis and the variances are plotted on the y axis. After briefly reading the paper introducing voom (Law et al., 2014), I was unable to understand why the voom plot has a slight increase trend before decreasing. My understanding of linear models is not adequate enough to have an explanation; if this can be explained, I would really like to understand why. In my research, I have come across the downwards trend correlating to inaccurate groupings or the need to filter the data higher.The black dots in each of these plots correlates to a gene in our data set. We can see that this data set is smaller in comparison to the data set used in the vignette. Voom creates an EList object containing various information we have already seen in the DGEList object as well as additional information such as expression values and precision weights.
+
+## Examining the number of differentially expressed genes
+
+A simple table can be created using the decideTests function from limma to summarize the number of significantly up- and down-regulated genes. As per usual, significance is cut off at a p-value of 0.05 by default.
+
+```{r decidetests}
+dt <- decideTests(EFit)
+summary(dt)
+```
+
+We can see that most of the genes are not significantly different in the two groupings. This tells us that there are 28 genes that are up-regulated in the tumor samples and 26 down-regulated genes in the tumor samples relative to the luminal samples. This can mean that there only a few gene expressions that are affected in our data set when comparing tumor and luminal mammary samples of mice.
+
+This step allows us to extract the differentially expressed gene names. As 0 represents genes that are not differentially expressed, we are looking for the rest.
+
+```{r DE genes}
+DE_Common <- which(dt[,1] != 0)
+length(DE_Common) #54 genes
+DE_Genes <- rownames(EFit$coefficients)[DE_Common] 
+DE_Genes
+```
+
+These are the significantly expressed genes. I am storing this vector for later use for finding GO terms.
+
+## Displaying the differential expression results graphically
+
+Limma has a function called plotMD which allows for the genes to be displayed visually by mean-difference plots. This uses log-FC values from our lineal model analysis against the mean lcpm value. Glimma creates this same plot using glMDPlot, however it creates an interactive html link which is better for deeper analysis!
+
+```{r GlimmaMD, warning = F}
+dfLCPM <- cpm(DGE_Data, log = T)
+glMDPlot(EFit, coef = 1, 
+         status = dt, 
+         main = "Tumor vs Luminal", 
+         side.main = "Genes", 
+         counts = dfLCPM, 
+         groups = group, 
+         launch = T)
+```
+
+[HTML link to the interactive plot.](glimma-plots/MD-Plot.html)
+
+Make sure to save the glimma-plots folder in your working directory for this link to be active. If this does not work for you, the plot will appear in your web browser when the script is run. Here's a screenshot for a preview.
+
+
+![A screenshot preview of the interactive MD plot.](InteractiveMD.png)
+
+I also created this same plot using limma's plotMD function. It has been commented out as the interactive plot by glimma is more visually appealing.
+
+```{r plotMD}
+par(mfrow = c(1,1))
+# plotMD(EFit, column = 1, status = dt[,1],
+#        main = "Tumor vs Luminal", 
+#        xlim = c(0, 13),
+#        xlab = "Average log of expression",
+#        ylab = "logFC")
+```
+
+A MD plot is an interpretation of the Bland-Altman plot which calculates the agreement between quantitative measures (Giavarina, 2015). The mean and sd of the differences between the measurements are used to calculate the statistical limits (Giavarina, 2015). It is a scatter plot where the x axis displays average of the means and the y axis measures the difference of the paired measurements we calculated earlier when creating our contrast matrix (Giavarina, 2015). As we can see in the colored dots, the red ones display the up-regulated genes and the blue dots show the down-regulated genes.
+
+
+A heatmap can also be used to display the differentially expressed genes. We will be using all 54 DE genes. We can utilize the heatmap.2 function from the gplots package to create this.
+
+```{r Heatmap, fig.width=15, fig.height=10}
+dfLCPM <- cpm(DGE_Data, log = T)
+Color_HeatMap <- colorpanel(1000, "turquoise4", "white", "tomato3")
+
+heatmap.2(dfLCPM[DE_Common,], 
+          scale = "row",
+          labRow = DE_Genes,
+          labCol = group,
+          key = T,
+          key.par = list(mar = c(0,1,5,1)),
+          col = Color_HeatMap,
+          trace = "none",
+          density.info = "none",
+          lhei = c(2,10),
+          dendrogram = "column",
+          ColSideColors = rep(c("lightgoldenrod2", "palegreen2"), each = 12))
+
+legend(x = -4, y = 0.6,
+       title = as.expression(bquote(bold("Groups"))),
+       legend = c("tumor", "luminal"),
+       fill = c("lightgoldenrod2", "palegreen2"),
+       cex = 0.7,
+       box.lty = 0,
+       title.adj = 0.2)
+```
+
+![Heat map showing the differentially expressed genes. The first image is incomplete in RMarkdown. The second image is a screenshot from the plot created from my .R file.](HeatMap.png)
+
+Side note, it took me over two hours to get this right..why are legends so difficult? Also, I googled for quite a while trying to see why the image is incomplete on RMarkdown, but to no prevail. Do you have any advice?
+
+As we can see, this data set is quite a mess. There are two tumor samples that have clustered with the luminal samples. As I talked about in the data acquisition section, both these cell-types are from a BRCA1-deficient mouse; the paper was studying the intratumor variations so a very clear distinction of gene expression is not going to be seen. However, we can mildly see a distinction between the up-regulated and down-regulated genes in the tumor and luminal samples. Most of the genes at the top of the plot show an up-regulation in tumor cells and the most of the genes at the bottom of the plot show an up-regulation in the luminal cells. The next step for my analysis is to correlate these differentially expressed genes with their associated GO terms.
+
+
+## Gene Ontology Analysis
 
 
