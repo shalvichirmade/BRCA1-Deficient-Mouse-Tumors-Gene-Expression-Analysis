@@ -538,6 +538,8 @@ GO_Results %>%
 
 #Mi H, Huang X, Muruganujan A, Tang H, Mills C, Kang D, Thomas PD. PANTHER version 14: more genomes, a new PANTHER GO-slim and improvements in enrichment analysis tools. Nucleic Acids Res. Jan 2019;47(D1):D419-D426.
 
+#user9112767, 2018. How to hold figure position with figure caption in pdf output of knitr? https://stackoverflow.com/questions/29696172/how-to-hold-figure-position-with-figure-caption-in-pdf-output-of-knitr
+
 #Young, Matthew D, Matthew J Wakefield, Gordon K Smyth, and Alicia Oshlack. 2010. “Gene Ontology Analysis for Rna-Seq: Accounting for Selection Bias.” Genome Biology 11: R14.
 #GO plot
 
