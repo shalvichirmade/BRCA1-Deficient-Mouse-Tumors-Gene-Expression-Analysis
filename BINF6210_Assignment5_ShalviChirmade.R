@@ -294,7 +294,7 @@ rm(dfLCPM_filtered, dfLib, L, M, SC_Names, samplenames)
 #The main vignettes I decided to adapt for this script are both from Bioconductor: RNA-seq analysis is easy as 1-2-3 with limma, Glimma and edgeR, and goseq: Gene Ontology testing for RNA-seq datasets.
 #https://master.bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
 #https://bioconductor.org/packages/devel/bioc/vignettes/goseq/inst/doc/goseq.pdf
-#TODO make into bullet points
+
 #To begin, I researched different RNA sequencing packages available and used the paper by Seyednasrollah et al. as a guideline for selecting a specific software tool. To explain briefly, the paper outlines the most popular software tools currently used for analyzing RNA-sequencing data. The authors used real data to conduct their analysis instead of using simulated data; this accounts for natural variability seen in real-life data and allows the comparison to be more realistic. As the human understanding of variability is imperfect, using this type of real data becomes a large advantage while comparing computational tools. Through their analysis, I decided to use the tool limma by Bioconductor as this package had a high precision level which corresponds to the accuracy of analyzing replicates. The authors also display a proportion of false discoveries for the software tools analyzed and limma displays a low proportion. As I also considered using edgeR by Bioconductor, I decided not to choose this as it shows a varying degree of false discovery proportion between sample types as well as lower precision levels when analyzing replicates. Both limma and edgeR are available packages by Bioconductor and I utilize both of these when conducting my analysis. Sun et al. use Cufflinks to carry out their RNA-seq analysis and TopHat for alignment. My main analysis is using the function voom by limma which uses linear regression modeling  while analyzing the read counts for the RNA sequence data (Law et. al., 2014). The functions I use from edgeR are DGEList which helps me covert my data frame downloaded from GEO into a DGEList object and filterByExpression which allows the data to filter out the lowly expressed genes. I also use the package geoseq by Bioconductor to carry out my Gene Ontology analysis which accounts for the gene length bias of our differentially expressed genes. Understanding this vignette and carrying out the analysis was a very new experience for me. It was thoroughly an educational experience and helped me understand the difficulties of using new data objects. I consulted many vignettes and tutorials to be able to carry out the analysis seen in the last figure. of this script. However, this journey has encouraged me to develop new investigative skills and has me excited for my future summer project!
 
 
@@ -315,7 +315,6 @@ mtContrasts
 
 #Removing heteroscedasticity from count data
 
-#Comment plot
 #When using raw counts for RNA-seq data, the variance is not considered independent from the mean. For this script, we use the lcpm values where we assume our data is normally distributed. The function, voom, calculates precision weights on the mean-variance dependency by using library size and the normalization factors. I have commented out the plots as I believe the other plots I have created in the main analysis portray more significant visualizations for this assignment.
 #par(mfrow = c(1,2))
 V_EList <- voom(DGE_Data, mtDesign, plot = F, save.plot = T)
@@ -516,7 +515,7 @@ GO_Results %>%
 
 #Dr. Sarah Adamowicz - 
 #Discussed the nature of my data set and helped me come to a conclusion for my next steps. 
-#RNA-seq script and interpretation helped me understand the limma Bioconductor vignette and mys results.
+#RNA-seq script and interpretation helped me understand the limma Bioconductor vignette and my results.
 
 #Study group: Emily Maier, Nykole Crevits and Patricia Balbon - Continuous encouragement and support while working through this assignment, and the term as a whole.
 
