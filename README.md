@@ -5,5 +5,6 @@ Dataset obtained from GEO database: https://www.ncbi.nlm.nih.gov/geo/query/acc.c
 
 This is the final assignment for Bioinfroamtics Software Tools.
 BINF 6210 at the University of Guelph
+Grade: 97%
 
 The full script is written in R.
